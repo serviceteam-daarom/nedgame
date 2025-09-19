@@ -69,11 +69,44 @@ function productCardHTML(p, perRow) {
   `.trim();
 }
 
-/** Responsive table row met mobile media queries */
+/** Responsive table row met mobile media queries - bouwt meerdere rows voor 2-kolom layout */
 function rowHTML(productsInRow, perRow) {
-  const cells = productsInRow.map(p => productCardHTML(p, perRow)).join("");
+  // Voor 2 kolommen: splits producten in paren voor aparte rows
+  if (perRow === 2) {
+    const rows = [];
+    for (let i = 0; i < productsInRow.length; i += 2) {
+      const pair = productsInRow.slice(i, i + 2);
+      const cells = pair.map(p => productCardHTML(p, perRow)).join("");
+      const emptyCell = pair.length < 2 ? `<td style="width:50%;"></td>` : '';
+      rows.push(`<tr>${cells}${emptyCell}</tr>`);
+    }
+    
+    return `
+      <![CDATA[
+        <style type="text/css">
+          @media only screen and (max-width: 600px) {
+            .product-cell {
+              width: 100% !important;
+              display: block !important;
+            }
+            .responsive-table {
+              width: 100% !important;
+            }
+            .product-cell img {
+              max-width: 150px !important;
+              height: 150px !important;
+            }
+          }
+        </style>
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width:100%; border-collapse:collapse;" class="responsive-table">
+          ${rows.join('')}
+        </table>
+      ]]>
+    `.trim();
+  }
   
-  // Voeg lege cellen toe als de rij niet vol is
+  // Voor andere aantallen kolommen: normale single row
+  const cells = productsInRow.map(p => productCardHTML(p, perRow)).join("");
   const emptyCells = perRow - productsInRow.length;
   const emptyHTML = emptyCells > 0 ? 
     Array(emptyCells).fill(`<td style="width:${Math.floor(100/perRow)}%;"></td>`).join('') : '';
@@ -111,11 +144,26 @@ function rowHTML(productsInRow, perRow) {
   `.trim();
 }
 
-/** Split array in blokken van size N */
+/** Split array in blokken - speciale behandeling voor 2 kolommen */
 function chunk(array, size) {
   if (size <= 1) return array.map(x => [x]);
+  
+  // Voor 2 kolommen: maak grotere chunks met alle producten die in één RSS item passen
+  // Dit voorkomt dat producten over meerdere RSS items verspreid worden
+  if (size === 2) {
+    const maxProductsPerItem = 8; // Maximaal 4 rijen van 2 producten
+    const chunks = [];
+    for (let i = 0; i < array.length; i += maxProductsPerItem) {
+      chunks.push(array.slice(i, i + maxProductsPerItem));
+    }
+    return chunks;
+  }
+  
+  // Voor andere kolommen: normale chunking per rij
   const out = [];
-  for (let i = 0; i < array.length; i += size) out.push(array.slice(i, i + size));
+  for (let i = 0; i < array.length; i += size) {
+    out.push(array.slice(i, i + size));
+  }
   return out;
 }
 
@@ -125,9 +173,13 @@ function toRss({ site, feedTitle, itemsChunks, perRow }) {
   const esc = (s) => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
 
   const itemXml = itemsChunks.map((chunk, idx) => {
-    const itemTitle = itemsChunks.length > 1
-      ? `${feedTitle} – ${perRow} per rij – set ${idx + 1}`
-      : `${feedTitle} – ${perRow} per rij`;
+    // Voor 2 kolommen: gebruik alle producten in chunk voor een enkele RSS item
+    // Voor andere kolommen: normale gedrag (chunk is een rij)
+    const itemTitle = perRow === 2 
+      ? `${feedTitle} – ${perRow} kolommen`
+      : (itemsChunks.length > 1
+        ? `${feedTitle} – ${perRow} per rij – set ${idx + 1}`
+        : `${feedTitle} – ${perRow} per rij`);
 
     const firstLink = chunk[0]?.link || site.link;
     const firstImage = chunk[0]?.image;
