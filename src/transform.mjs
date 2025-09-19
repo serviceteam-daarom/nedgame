@@ -377,66 +377,109 @@ async function main() {
   .preview-container {
     border: 2px dashed #e2e8f0;
     border-radius: 0.75rem;
-    padding: 1rem;
-    background: #fafafa;
-    overflow-x: auto;
-    transition: all 0.3s;
-  }
-  
-  .preview-grid {
-    display: grid;
-    gap: 1rem;
-    min-width: min-content;
-    transition: grid-template-columns 0.3s ease;
-  }
-  
-  .preview-grid.cols-1 { grid-template-columns: repeat(1, minmax(200px, 1fr)); }
-  .preview-grid.cols-2 { grid-template-columns: repeat(2, minmax(200px, 1fr)); }
-  .preview-grid.cols-3 { grid-template-columns: repeat(3, minmax(200px, 1fr)); }
-  .preview-grid.cols-4 { grid-template-columns: repeat(4, minmax(200px, 1fr)); }
-  
-  .product-card {
-    background: white;
-    border-radius: 0.5rem;
-    padding: 1rem;
-    text-align: center;
-    transition: all 0.3s;
-    cursor: pointer;
-    animation: productFadeIn 0.4s ease-out;
-    animation-fill-mode: both;
-  }
-  
-  .product-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1);
-  }
-  
-  .product-img {
-    width: 100%;
-    max-width: 150px;
-    height: 150px;
-    object-fit: contain;
-    margin: 0 auto 0.75rem;
-    border-radius: 0.375rem;
-  }
-  
-  .product-title {
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: #334155;
-    margin-bottom: 0.5rem;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
+    padding: 0;
+    background: #f8f9fa;
     overflow: hidden;
-    line-height: 1.4;
-    min-height: 2.8em;
+    transition: all 0.3s;
   }
   
-  .product-price {
-    font-size: 1.125rem;
-    font-weight: 700;
-    color: #6366f1;
+  .preview-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #64748b;
+    padding: 1rem;
+    background: white;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .preview-label svg {
+    width: 16px;
+    height: 16px;
+  }
+  
+  .email-wrapper {
+    padding: 20px;
+    background: #f8f9fa;
+  }
+  
+  .email-container {
+    max-width: 600px;
+    margin: 0 auto;
+    background: white;
+    border: 1px solid #dddddd;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  
+  .email-header {
+    background: #2c3e50;
+    padding: 20px;
+    text-align: center;
+    color: white;
+    font-size: 24px;
+    font-weight: bold;
+  }
+  
+  .email-content {
+    padding: 20px;
+  }
+  
+  /* Email preview table - exact zoals in ActiveCampaign */
+  .email-preview-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+  }
+  
+  .email-preview-table td {
+    vertical-align: top;
+    padding: 10px;
+    text-align: left;
+  }
+  
+  .email-preview-table.cols-1 td { width: 100%; }
+  .email-preview-table.cols-2 td { width: 50%; }
+  .email-preview-table.cols-3 td { width: 33.33%; }
+  .email-preview-table.cols-4 td { width: 25%; }
+  
+  .email-product-link {
+    text-decoration: none;
+    color: #000;
+    display: block;
+  }
+  
+  .email-product-link:hover .email-product-title {
+    color: #0066cc;
+    text-decoration: underline;
+  }
+  
+  .email-product-img {
+    max-width: 150px;
+    height: auto;
+    display: block;
+    margin: 0 0 8px 0;
+  }
+  
+  .email-product-title {
+    margin: 0;
+    font-weight: bold;
+    font-size: 14px;
+    line-height: 1.3;
+    text-align: left;
+    color: #000;
+  }
+  
+  .email-product-price {
+    margin-top: 4px;
+    color: #000;
+    font-weight: bold;
+    text-align: left;
+    font-size: 14px;
   }
   
   .loading-text {
@@ -586,17 +629,45 @@ async function main() {
         </div>
         
         <div class="preview-container">
-          ${products.length > 0 ? `
-            <div class="preview-grid cols-${defaultCols}" id="preview-${feed.slug}">
-              ${products.slice(0, 8).map((p, idx) => `
-                <div class="product-card" style="animation-delay: ${idx * 0.05}s">
-                  <img src="${p.image}" alt="${escHtml(p.title)}" class="product-img" loading="lazy" />
-                  <div class="product-title">${escHtml(p.title)}</div>
-                  <div class="product-price">€ ${p.price ? p.price.toFixed(2) : '-.--'}</div>
-                </div>
-              `).join('')}
+          <div class="preview-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+            </svg>
+            ActiveCampaign Email Preview (exact zoals in je nieuwsbrief)
+          </div>
+          <div class="email-wrapper">
+            <div class="email-container">
+              <div class="email-header">🎮 Nedgame Nieuwsbrief</div>
+              <div class="email-content">
+                ${products.length > 0 ? `
+                  <table class="email-preview-table cols-${defaultCols}" id="preview-${feed.slug}" role="presentation" cellpadding="0" cellspacing="0" border="0">
+                    ${(() => {
+                      const rows = [];
+                      const cols = defaultCols;
+                      for (let i = 0; i < Math.min(8, products.length); i += cols) {
+                        const rowProducts = products.slice(i, i + cols);
+                        rows.push(`
+                          <tr>
+                            ${rowProducts.map(p => `
+                              <td>
+                                <a href="${p.link}" class="email-product-link">
+                                  <img src="${p.image}" alt="${escHtml(p.title)}" class="email-product-img" />
+                                  <div class="email-product-title">${escHtml(p.title)}</div>
+                                  <div class="email-product-price">€ ${p.price ? p.price.toFixed(2) : '-.--'}</div>
+                                </a>
+                              </td>
+                            `).join('')}
+                            ${rowProducts.length < cols ? '<td></td>'.repeat(cols - rowProducts.length) : ''}
+                          </tr>
+                        `);
+                      }
+                      return rows.join('');
+                    })()}
+                  </table>
+                ` : '<div class="loading-text">Geen producten gevonden...</div>'}
+              </div>
             </div>
-          ` : '<div class="loading-text">Geen producten gevonden...</div>'}
+          </div>
         </div>
       </div>
       `;
@@ -635,18 +706,40 @@ async function main() {
         btn.classList.toggle('active', parseInt(btn.dataset.cols) === cols);
       });
       
-      // Update preview grid
+      // Update preview table
       const preview = document.getElementById(\`preview-\${feedSlug}\`);
       if (preview) {
-        preview.className = \`preview-grid cols-\${cols}\`;
+        preview.className = \`email-preview-table cols-\${cols}\`;
         
-        // Re-trigger animations
-        preview.querySelectorAll('.product-card').forEach((card, idx) => {
-          card.style.animation = 'none';
-          setTimeout(() => {
-            card.style.animation = \`productFadeIn 0.4s ease-out \${idx * 0.05}s both\`;
-          }, 10);
-        });
+        // Rebuild table with new column count
+        const products = ${JSON.stringify(previewData)};
+        const feedProducts = products[feedSlug] || [];
+        
+        if (feedProducts.length > 0) {
+          const rows = [];
+          for (let i = 0; i < Math.min(8, feedProducts.length); i += cols) {
+            const rowProducts = feedProducts.slice(i, i + cols);
+            const cells = rowProducts.map(p => {
+              // Escape HTML
+              const escTitle = p.title.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+              return \`
+                <td>
+                  <a href="\${p.link}" class="email-product-link">
+                    <img src="\${p.image}" alt="\${escTitle}" class="email-product-img" />
+                    <div class="email-product-title">\${escTitle}</div>
+                    <div class="email-product-price">€ \${p.price ? p.price.toFixed(2) : '-.--'}</div>
+                  </a>
+                </td>
+              \`;
+            }).join('');
+            
+            const emptyCells = cols - rowProducts.length > 0 ? 
+              '<td></td>'.repeat(cols - rowProducts.length) : '';
+            
+            rows.push(\`<tr>\${cells}\${emptyCells}</tr>\`);
+          }
+          preview.innerHTML = rows.join('');
+        }
       }
       
       // Update URL
