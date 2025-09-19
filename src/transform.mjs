@@ -3,12 +3,6 @@ import path from "node:path";
 import fetch from "node-fetch";
 import { XMLParser } from "fast-xml-parser";
 
-/**
- * Instelbaar aantal producten naast elkaar in één RSS-item.
- * Zet op 1 als je elk product als eigen item wilt.
- */
-const ITEMS_PER_ROW = 3;
-
 const __dirname = path.dirname(new URL(import.meta.url).pathname);
 const CONFIG_PATH = path.join(__dirname, "..", "feeds.config.json");
 const OUT_DIR = path.join(__dirname, "..", "public");
@@ -44,10 +38,7 @@ function parseProducts(xmlText) {
     .filter(p => p.id && p.title && p.link);
 }
 
-/**
- * Maak kaart-HTML voor één product
- * Titel onder afbeelding; prijs daaronder; alles gecentreerd.
- */
+/** HTML voor 1 product-card: titel onder image, prijs daaronder */
 function productCardHTML(p) {
   const esc = (s) => String(s)
     .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -67,9 +58,7 @@ function productCardHTML(p) {
   `.trim();
 }
 
-/**
- * Bouw een description-blok met N producten naast elkaar (1 rij).
- */
+/** 1 rij HTML met N cards naast elkaar */
 function rowHTML(productsInRow) {
   const cells = productsInRow.map(productCardHTML).join("");
   return `
@@ -83,26 +72,25 @@ function rowHTML(productsInRow) {
   `.trim();
 }
 
-/**
- * Converteer naar RSS 2.0.
- * Wanneer ITEMS_PER_ROW > 1, worden producten in chunks geplaatst
- * zodat elk RSS-item meerdere “cards” naast elkaar toont.
- */
-function toRss({ site, feedTitle, itemsChunks }) {
+/** Split array in blokken van size N */
+function chunk(array, size) {
+  if (size <= 1) return array.map(x => [x]);
+  const out = [];
+  for (let i = 0; i < array.length; i += size) out.push(array.slice(i, i + size));
+  return out;
+}
+
+/** Bouw RSS 2.0 met cards in rijen van N */
+function toRss({ site, feedTitle, itemsChunks, perRow }) {
   const pubDate = new Date().toUTCString();
-  const esc = (s) => String(s)
-    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const esc = (s) => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
 
   const itemXml = itemsChunks.map((chunk, idx) => {
-    // Title van het RSS-item: feedTitle + set-nummer
     const itemTitle = itemsChunks.length > 1
-      ? `${feedTitle} – set ${idx + 1}`
-      : feedTitle;
+      ? `${feedTitle} – ${perRow} per rij – set ${idx + 1}`
+      : `${feedTitle} – ${perRow} per rij`;
 
-    // Link van het item: neem link van eerste product voor fallback
     const firstLink = chunk[0]?.link || site.link;
-
-    // Enclosure: pak de eerste image als enclosure
     const firstImage = chunk[0]?.image;
     const enclosure = firstImage ? `<enclosure url="${firstImage}" length="0" type="image/jpeg" />` : "";
 
@@ -110,7 +98,7 @@ function toRss({ site, feedTitle, itemsChunks }) {
       <item>
         <title>${esc(itemTitle)}</title>
         <link>${firstLink}</link>
-        <guid isPermaLink="false">${esc(`${feedTitle}-${idx + 1}-${chunk[0]?.id || Date.now()}`)}</guid>
+        <guid isPermaLink="false">${esc(`${feedTitle}-${perRow}-${idx + 1}-${chunk[0]?.id || Date.now()}`)}</guid>
         <pubDate>${pubDate}</pubDate>
         <description>
           ${rowHTML(chunk)}
@@ -133,16 +121,21 @@ function toRss({ site, feedTitle, itemsChunks }) {
 </rss>`.trim();
 }
 
-/**
- * Chunk helper: splits array in blokken van size N
- */
-function chunk(array, size) {
-  if (size <= 1) return array.map(x => [x]);
-  const out = [];
-  for (let i = 0; i < array.length; i += size) {
-    out.push(array.slice(i, i + size));
-  }
-  return out;
+async function buildOneVariant({ site, feed, products, perRow }) {
+  const chunks = chunk(products, Math.max(1, perRow));
+  const rssXml = toRss({
+    site,
+    feedTitle: feed.title,
+    itemsChunks: chunks,
+    perRow
+  });
+
+  // bestandsnaam: standaard zonder suffix is 3 per rij als default (of eerste variant)
+  const suffix = perRow === (feed.default_per_row || 3) ? "" : `-r${perRow}`;
+  const fileName = `${feed.slug}${suffix}.xml`;
+
+  await fs.writeFile(path.join(OUT_DIR, "rss", fileName), rssXml, "utf8");
+  return fileName;
 }
 
 async function main() {
@@ -152,14 +145,16 @@ async function main() {
   await fs.mkdir(path.join(OUT_DIR, "rss"), { recursive: true });
   await fs.mkdir(path.join(OUT_DIR, "api"), { recursive: true });
 
+  const indexLinks = [];
+
   for (const feed of config.feeds) {
     try {
-      const res = await fetch(feed.source, { headers: { "User-Agent": "nedgame-ac-proxy/1.1" } });
+      const res = await fetch(feed.source, { headers: { "User-Agent": "nedgame-ac-proxy/1.2" } });
       if (!res.ok) throw new Error(`Fetch failed ${res.status}`);
       const xml = await res.text();
       const products = parseProducts(xml);
 
-      // JSON output (volledige lijst)
+      // JSON (volledige lijst)
       const jsonOut = {
         title: feed.title,
         source: feed.source,
@@ -169,22 +164,29 @@ async function main() {
       };
       await fs.writeFile(path.join(OUT_DIR, "api", `${feed.slug}.json`), JSON.stringify(jsonOut, null, 2), "utf8");
 
-      // RSS output in "cards" met ITEMS_PER_ROW naast elkaar
-      const chunks = chunk(products, Math.max(1, ITEMS_PER_ROW));
-      const rssXml = toRss({
-        site: config.site || { title: "Nedgame Feeds", link: "https://www.nedgame.nl/", language: "nl-NL" },
-        feedTitle: feed.title,
-        itemsChunks: chunks
-      });
-      await fs.writeFile(path.join(OUT_DIR, "rss", `${feed.slug}.xml`), rssXml, "utf8");
+      // Variants bepalen
+      const defaultPerRow = feed.default_per_row || 3;
+      const variants = Array.isArray(feed.row_variants) && feed.row_variants.length
+        ? Array.from(new Set(feed.row_variants.map(n => Math.max(1, parseInt(n, 10)))))
+        : [defaultPerRow]; // fallback alleen default
 
-      console.log(`Generated: ${feed.slug} (${products.length} products / ${chunks.length} RSS items, ${ITEMS_PER_ROW} per row)`);
+      // Zorg dat default altijd in de lijst zit
+      if (!variants.includes(defaultPerRow)) variants.unshift(defaultPerRow);
+
+      const files = [];
+      for (const perRow of variants) {
+        const file = await buildOneVariant({ site: config.site || {}, feed, products, perRow });
+        files.push({ perRow, file });
+      }
+
+      indexLinks.push({ feed, files });
+      console.log(`Generated ${feed.slug}: ${products.length} producten, varianten: ${files.map(f => f.perRow).join(", ")}`);
     } catch (e) {
       console.error(`Error on ${feed.slug}:`, e.message);
     }
   }
 
-  // Indexpagina
+  // Index
   const indexHtml = `<!doctype html>
 <html lang="nl">
 <head>
@@ -194,14 +196,16 @@ async function main() {
 </head>
 <body>
   <h1>${config.site?.title || "Nedgame Feeds"}</h1>
-  <p>Proxy-output voor ActiveCampaign:</p>
+  <p>Kies de variant met het gewenste aantal items per rij.</p>
   <ul>
-    ${config.feeds.map(f => `<li>
-      <a href="./rss/${f.slug}.xml">RSS: ${f.title}</a> · 
-      <a href="./api/${f.slug}.json">JSON: ${f.title}</a>
-    </li>`).join("")}
+    ${indexLinks.map(({ feed, files }) => `
+      <li>
+        <strong>${feed.title}</strong>:
+        ${files.map(f => `<a href="./rss/${f.file}">${f.perRow}/rij</a>`).join(" · ")}
+        &nbsp;|&nbsp; <a href="./api/${feed.slug}.json">JSON</a>
+      </li>
+    `).join("")}
   </ul>
-  <p>Layout: ${ITEMS_PER_ROW} product(en) per rij in de RSS items.</p>
 </body>
 </html>`;
   await fs.writeFile(path.join(OUT_DIR, "index.html"), indexHtml, "utf8");
