@@ -1,24 +1,34 @@
 {
+  "site": {
+    "title": "Nedgame Feeds",
+    "link": "https://www.nedgame.nl/",
+    "description": "Proxy feeds for ActiveCampaign",
+    "language": "nl-NL"
+  },
   "feeds": [
     {
       "slug": "pre-orders",
-      "title": "Pre Orders",
-      "url": "https://www.nedgame.nl/feeds/nieuwsbrief-pre-orders.xml"
+      "title": "Nedgame Pre-orders",
+      "source": "https://www.nedgame.nl/feeds/nieuwsbrief-pre-orders.xml",
+      "imageFallbackType": "image/jpeg"
     },
     {
       "slug": "nieuw-binnen",
-      "title": "Nieuw Binnen",
-      "url": "https://www.nedgame.nl/feeds/nieuwsbrief-nieuw-binnen.xml"
+      "title": "Nedgame Nieuw Binnen",
+      "source": "https://www.nedgame.nl/feeds/nieuwsbrief-nieuw-binnen.xml",
+      "imageFallbackType": "image/jpeg"
     },
     {
       "slug": "best-verkocht",
-      "title": "Best Verkocht",
-      "url": "https://www.nedgame.nl/feeds/nieuwsbrief-best-verkocht.xml"
+      "title": "Nedgame Best Verkocht",
+      "source": "https://www.nedgame.nl/feeds/nieuwsbrief-best-verkocht.xml",
+      "imageFallbackType": "image/jpeg"
     },
     {
       "slug": "merchandise",
-      "title": "Merchandise",
-      "url": "https://www.nedgame.nl/feeds/nieuwsbrief-merchandise.xml"
+      "title": "Nedgame Merchandise",
+      "source": "https://www.nedgame.nl/feeds/nieuwsbrief-merchandise.xml",
+      "imageFallbackType": "image/jpeg"
     }
   ]
 }
