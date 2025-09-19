@@ -38,14 +38,13 @@ function parseProducts(xmlText) {
     .filter(p => p.id && p.title && p.link);
 }
 
-/** Product card HTML met mobile-first responsive design */
+/** Product card HTML met mobile-first responsive design en consistente breedte */
 function productCardHTML(p, perRow) {
   const esc = (s) => String(s)
     .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
   // Bereken width percentages voor verschillende kolom aantallen
   const widthPercent = Math.floor(100 / perRow);
-  const mobileWidth = perRow > 2 ? "50%" : `${widthPercent}%`;
   
   return `
     <!--[if mso]>
@@ -55,9 +54,9 @@ function productCardHTML(p, perRow) {
     <td class="product-cell" style="vertical-align:top; width:${widthPercent}%; padding:10px;">
     <!--<![endif]-->
       <a href="${p.link}" style="text-decoration:none; color:#000; display:block;">
-        <div style="width:100%; height:180px; overflow:hidden; display:flex; align-items:center; justify-content:center; background:#f8f8f8; margin-bottom:8px;">
+        <div style="width:100%; text-align:center;">
           <img src="${p.image}" alt="${esc(p.title)}"
-               style="max-width:100%; max-height:180px; width:auto; height:auto; display:block;" />
+               style="width:100%; max-width:180px; height:180px; object-fit:contain; display:inline-block; margin-bottom:8px;" />
         </div>
         <div style="margin:0; font-weight:bold; font-size:14px; line-height:1.3; text-align:left; min-height:40px;">
           ${esc(p.title)}
@@ -91,8 +90,8 @@ function rowHTML(productsInRow, perRow) {
             width: 100% !important;
           }
           .product-cell img {
-            max-width: 100% !important;
-            height: auto !important;
+            max-width: 150px !important;
+            height: 150px !important;
           }
         }
         @media only screen and (max-width: 400px) {
@@ -513,23 +512,13 @@ async function main() {
     text-decoration: underline;
   }
   
-  .email-product-image-container {
-    width: 100%;
-    height: 180px;
-    background: #f8f8f8;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 8px;
-    overflow: hidden;
-  }
-  
   .email-product-img {
-    max-width: 100%;
-    max-height: 180px;
-    width: auto;
-    height: auto;
-    display: block;
+    width: 100%;
+    max-width: 180px;
+    height: 180px;
+    object-fit: contain;
+    display: inline-block;
+    margin-bottom: 8px;
   }
   
   .email-product-title {
@@ -720,7 +709,7 @@ async function main() {
                             ${rowProducts.map(p => `
                               <td>
                                 <a href="${p.link}" class="email-product-link">
-                                  <div class="email-product-image-container">
+                                  <div style="text-align:center;">
                                     <img src="${p.image}" alt="${escHtml(p.title)}" class="email-product-img" />
                                   </div>
                                   <div class="email-product-title">${escHtml(p.title)}</div>
@@ -807,7 +796,7 @@ async function main() {
               return \`
                 <td>
                   <a href="\${p.link}" class="email-product-link">
-                    <div class="email-product-image-container">
+                    <div style="text-align:center;">
                       <img src="\${p.image}" alt="\${escTitle}" class="email-product-img" />
                     </div>
                     <div class="email-product-title">\${escTitle}</div>
