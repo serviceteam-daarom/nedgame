@@ -38,19 +38,20 @@ function parseProducts(xmlText) {
     .filter(p => p.id && p.title && p.link);
 }
 
-/** HTML voor 1 product-card: titel onder image, prijs daaronder */
+/** Product card HTML: links uitgelijnd (titel en prijs) */
 function productCardHTML(p) {
   const esc = (s) => String(s)
     .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
   return `
-    <td style="text-align:center; width:180px; padding:10px; vertical-align:top;">
-      <a href="${p.link}" style="text-decoration:none; color:#000;">
-        <img src="${p.image}" alt="${esc(p.title)}" style="max-width:150px; height:auto; display:block; margin:0 auto;" />
-        <div style="margin-top:8px; font-weight:bold; font-size:14px; line-height:1.3;">
+    <td style="vertical-align:top; width:200px; padding:10px;">
+      <a href="${p.link}" style="text-decoration:none; color:#000; display:block;">
+        <img src="${p.image}" alt="${esc(p.title)}"
+             style="max-width:150px; height:auto; display:block; margin:0 0 8px 0;" />
+        <div style="margin:0; font-weight:bold; font-size:14px; line-height:1.3; text-align:left;">
           ${esc(p.title)}
         </div>
-        <div style="margin-top:4px; color:#000; font-weight:bold;">
+        <div style="margin-top:4px; color:#000; font-weight:bold; text-align:left;">
           € ${isFinite(p.price) ? p.price.toFixed(2) : esc(p.price)}
         </div>
       </a>
@@ -130,7 +131,7 @@ async function buildOneVariant({ site, feed, products, perRow }) {
     perRow
   });
 
-  // bestandsnaam: standaard zonder suffix is 3 per rij als default (of eerste variant)
+  // bestandsnaam: default_per_row zonder suffix, varianten met -rX
   const suffix = perRow === (feed.default_per_row || 3) ? "" : `-r${perRow}`;
   const fileName = `${feed.slug}${suffix}.xml`;
 
@@ -149,7 +150,7 @@ async function main() {
 
   for (const feed of config.feeds) {
     try {
-      const res = await fetch(feed.source, { headers: { "User-Agent": "nedgame-ac-proxy/1.2" } });
+      const res = await fetch(feed.source, { headers: { "User-Agent": "nedgame-ac-proxy/1.3" } });
       if (!res.ok) throw new Error(`Fetch failed ${res.status}`);
       const xml = await res.text();
       const products = parseProducts(xml);
@@ -164,13 +165,12 @@ async function main() {
       };
       await fs.writeFile(path.join(OUT_DIR, "api", `${feed.slug}.json`), JSON.stringify(jsonOut, null, 2), "utf8");
 
-      // Variants bepalen
+      // Variants
       const defaultPerRow = feed.default_per_row || 3;
       const variants = Array.isArray(feed.row_variants) && feed.row_variants.length
         ? Array.from(new Set(feed.row_variants.map(n => Math.max(1, parseInt(n, 10)))))
-        : [defaultPerRow]; // fallback alleen default
+        : [defaultPerRow];
 
-      // Zorg dat default altijd in de lijst zit
       if (!variants.includes(defaultPerRow)) variants.unshift(defaultPerRow);
 
       const files = [];
