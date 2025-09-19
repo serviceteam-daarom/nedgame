@@ -38,20 +38,31 @@ function parseProducts(xmlText) {
     .filter(p => p.id && p.title && p.link);
 }
 
-/** Product card HTML: links uitgelijnd (titel en prijs) */
-function productCardHTML(p) {
+/** Product card HTML met mobile-first responsive design */
+function productCardHTML(p, perRow) {
   const esc = (s) => String(s)
     .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
+  // Bereken width percentages voor verschillende kolom aantallen
+  const widthPercent = Math.floor(100 / perRow);
+  const mobileWidth = perRow > 2 ? "50%" : `${widthPercent}%`;
+  
   return `
-    <td style="vertical-align:top; width:200px; padding:10px;">
+    <!--[if mso]>
+    <td style="vertical-align:top; width:${widthPercent}%; padding:10px;">
+    <![endif]-->
+    <!--[if !mso]><!-->
+    <td class="product-cell" style="vertical-align:top; width:${widthPercent}%; padding:10px;">
+    <!--<![endif]-->
       <a href="${p.link}" style="text-decoration:none; color:#000; display:block;">
-        <img src="${p.image}" alt="${esc(p.title)}"
-             style="max-width:150px; height:auto; display:block; margin:0 0 8px 0;" />
-        <div style="margin:0; font-weight:bold; font-size:14px; line-height:1.3; text-align:left;">
+        <div style="width:100%; height:180px; overflow:hidden; display:flex; align-items:center; justify-content:center; background:#f8f8f8; margin-bottom:8px;">
+          <img src="${p.image}" alt="${esc(p.title)}"
+               style="max-width:100%; max-height:180px; width:auto; height:auto; display:block;" />
+        </div>
+        <div style="margin:0; font-weight:bold; font-size:14px; line-height:1.3; text-align:left; min-height:40px;">
           ${esc(p.title)}
         </div>
-        <div style="margin-top:4px; color:#000; font-weight:bold; text-align:left;">
+        <div style="margin-top:4px; color:#e60000; font-weight:bold; text-align:left; font-size:16px;">
           € ${isFinite(p.price) ? p.price.toFixed(2) : esc(p.price)}
         </div>
       </a>
@@ -59,14 +70,42 @@ function productCardHTML(p) {
   `.trim();
 }
 
-/** 1 rij HTML met N cards naast elkaar */
-function rowHTML(productsInRow) {
-  const cells = productsInRow.map(productCardHTML).join("");
+/** Responsive table row met mobile media queries */
+function rowHTML(productsInRow, perRow) {
+  const cells = productsInRow.map(p => productCardHTML(p, perRow)).join("");
+  
+  // Voeg lege cellen toe als de rij niet vol is
+  const emptyCells = perRow - productsInRow.length;
+  const emptyHTML = emptyCells > 0 ? 
+    Array(emptyCells).fill(`<td style="width:${Math.floor(100/perRow)}%;"></td>`).join('') : '';
+  
   return `
     <![CDATA[
-      <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width:100%; border-collapse:collapse;">
+      <style type="text/css">
+        @media only screen and (max-width: 600px) {
+          .product-cell {
+            width: ${perRow > 2 ? '50' : '100'}% !important;
+            display: ${perRow > 2 ? 'inline-block' : 'block'} !important;
+          }
+          .responsive-table {
+            width: 100% !important;
+          }
+          .product-cell img {
+            max-width: 100% !important;
+            height: auto !important;
+          }
+        }
+        @media only screen and (max-width: 400px) {
+          .product-cell {
+            width: 100% !important;
+            display: block !important;
+          }
+        }
+      </style>
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width:100%; border-collapse:collapse;" class="responsive-table">
         <tr>
           ${cells}
+          ${emptyHTML}
         </tr>
       </table>
     ]]>
@@ -81,7 +120,7 @@ function chunk(array, size) {
   return out;
 }
 
-/** Bouw RSS 2.0 met cards in rijen van N */
+/** Bouw RSS 2.0 met responsive cards */
 function toRss({ site, feedTitle, itemsChunks, perRow }) {
   const pubDate = new Date().toUTCString();
   const esc = (s) => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
@@ -102,7 +141,7 @@ function toRss({ site, feedTitle, itemsChunks, perRow }) {
         <guid isPermaLink="false">${esc(`${feedTitle}-${perRow}-${idx + 1}-${chunk[0]?.id || Date.now()}`)}</guid>
         <pubDate>${pubDate}</pubDate>
         <description>
-          ${rowHTML(chunk)}
+          ${rowHTML(chunk, perRow)}
         </description>
         ${enclosure}
       </item>
@@ -308,6 +347,22 @@ async function main() {
     box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
   }
   
+  .mobile-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: #ddd6fe;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    color: #6b21a8;
+    font-weight: 500;
+  }
+  
+  .mobile-toggle input {
+    cursor: pointer;
+  }
+  
   .url-container {
     display: flex;
     gap: 0.5rem;
@@ -417,7 +472,7 @@ async function main() {
   }
   
   .email-header {
-    background: #2c3e50;
+    background: #e60000;
     padding: 20px;
     text-align: center;
     color: white;
@@ -458,11 +513,23 @@ async function main() {
     text-decoration: underline;
   }
   
+  .email-product-image-container {
+    width: 100%;
+    height: 180px;
+    background: #f8f8f8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 8px;
+    overflow: hidden;
+  }
+  
   .email-product-img {
-    max-width: 150px;
+    max-width: 100%;
+    max-height: 180px;
+    width: auto;
     height: auto;
     display: block;
-    margin: 0 0 8px 0;
   }
   
   .email-product-title {
@@ -472,33 +539,32 @@ async function main() {
     line-height: 1.3;
     text-align: left;
     color: #000;
+    min-height: 40px;
   }
   
   .email-product-price {
     margin-top: 4px;
-    color: #000;
+    color: #e60000;
     font-weight: bold;
     text-align: left;
-    font-size: 14px;
+    font-size: 16px;
   }
   
-  .loading-text {
-    text-align: center;
-    color: #94a3b8;
-    padding: 2rem;
-    font-style: italic;
+  /* Mobile preview mode */
+  .email-container.mobile-preview {
+    max-width: 375px;
   }
   
-  .stats-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.375rem;
-    padding: 0.25rem 0.75rem;
-    background: #f0f9ff;
-    color: #0369a1;
-    border-radius: 9999px;
-    font-size: 0.875rem;
-    font-weight: 500;
+  .email-container.mobile-preview .email-preview-table.cols-3 td,
+  .email-container.mobile-preview .email-preview-table.cols-4 td {
+    width: 50%;
+    display: inline-block;
+  }
+  
+  .email-container.mobile-preview .email-preview-table.cols-1 td,
+  .email-container.mobile-preview .email-preview-table.cols-2 td {
+    width: 100%;
+    display: block;
   }
   
   @keyframes fadeInDown {
@@ -523,20 +589,23 @@ async function main() {
     }
   }
   
-  @keyframes productFadeIn {
-    from {
-      opacity: 0;
-      transform: scale(0.95);
-    }
-    to {
-      opacity: 1;
-      transform: scale(1);
-    }
+  .loading-text {
+    text-align: center;
+    color: #94a3b8;
+    padding: 2rem;
+    font-style: italic;
   }
   
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.7; }
+  .stats-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.25rem 0.75rem;
+    background: #f0f9ff;
+    color: #0369a1;
+    border-radius: 9999px;
+    font-size: 0.875rem;
+    font-weight: 500;
   }
   
   .toast {
@@ -561,10 +630,6 @@ async function main() {
   }
   
   @media (max-width: 768px) {
-    .preview-grid {
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)) !important;
-    }
-    
     .feed-header {
       flex-direction: column;
       align-items: flex-start;
@@ -576,7 +641,7 @@ async function main() {
   <div class="container">
     <div class="header">
       <h1>🎮 Nedgame Feed Proxy</h1>
-      <p>ActiveCampaign RSS feeds met aanpasbare product grid layouts</p>
+      <p>ActiveCampaign RSS feeds met mobile-responsive product grids</p>
     </div>
     
     ${indexLinks.map(({ feed, files }) => {
@@ -604,6 +669,10 @@ async function main() {
               </svg>
               ${products.length} producten
             </span>
+            <div class="mobile-toggle">
+              <input type="checkbox" id="mobile-${feed.slug}" onchange="toggleMobile('${feed.slug}')">
+              <label for="mobile-${feed.slug}">📱 Mobile preview</label>
+            </div>
             <div class="columns-selector" data-feed="${feed.slug}">
               ${feed.row_variants.map(cols => `
                 <button class="col-btn ${cols === defaultCols ? 'active' : ''}" 
@@ -633,10 +702,10 @@ async function main() {
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
             </svg>
-            ActiveCampaign Email Preview (exact zoals in je nieuwsbrief)
+            ActiveCampaign Email Preview (exact rendering)
           </div>
           <div class="email-wrapper">
-            <div class="email-container">
+            <div class="email-container" id="email-container-${feed.slug}">
               <div class="email-header">🎮 Nedgame Nieuwsbrief</div>
               <div class="email-content">
                 ${products.length > 0 ? `
@@ -651,7 +720,9 @@ async function main() {
                             ${rowProducts.map(p => `
                               <td>
                                 <a href="${p.link}" class="email-product-link">
-                                  <img src="${p.image}" alt="${escHtml(p.title)}" class="email-product-img" />
+                                  <div class="email-product-image-container">
+                                    <img src="${p.image}" alt="${escHtml(p.title)}" class="email-product-img" />
+                                  </div>
                                   <div class="email-product-title">${escHtml(p.title)}</div>
                                   <div class="email-product-price">€ ${p.price ? p.price.toFixed(2) : '-.--'}</div>
                                 </a>
@@ -699,6 +770,17 @@ async function main() {
       return cols === defaultCols ? \`\${feedSlug}.xml\` : \`\${feedSlug}-r\${cols}.xml\`;
     }
     
+    function toggleMobile(feedSlug) {
+      const container = document.getElementById(\`email-container-\${feedSlug}\`);
+      const checkbox = document.getElementById(\`mobile-\${feedSlug}\`);
+      
+      if (checkbox.checked) {
+        container.classList.add('mobile-preview');
+      } else {
+        container.classList.remove('mobile-preview');
+      }
+    }
+    
     function updateColumns(feedSlug, cols) {
       // Update button states
       const selector = document.querySelector(\`.columns-selector[data-feed="\${feedSlug}"]\`);
@@ -725,7 +807,9 @@ async function main() {
               return \`
                 <td>
                   <a href="\${p.link}" class="email-product-link">
-                    <img src="\${p.image}" alt="\${escTitle}" class="email-product-img" />
+                    <div class="email-product-image-container">
+                      <img src="\${p.image}" alt="\${escTitle}" class="email-product-img" />
+                    </div>
                     <div class="email-product-title">\${escTitle}</div>
                     <div class="email-product-price">€ \${p.price ? p.price.toFixed(2) : '-.--'}</div>
                   </a>
