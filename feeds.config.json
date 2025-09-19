@@ -1,0 +1,24 @@
+{
+  "feeds": [
+    {
+      "slug": "pre-orders",
+      "title": "Pre Orders",
+      "url": "https://www.nedgame.nl/feeds/nieuwsbrief-pre-orders.xml"
+    },
+    {
+      "slug": "nieuw-binnen",
+      "title": "Nieuw Binnen",
+      "url": "https://www.nedgame.nl/feeds/nieuwsbrief-nieuw-binnen.xml"
+    },
+    {
+      "slug": "best-verkocht",
+      "title": "Best Verkocht",
+      "url": "https://www.nedgame.nl/feeds/nieuwsbrief-best-verkocht.xml"
+    },
+    {
+      "slug": "merchandise",
+      "title": "Merchandise",
+      "url": "https://www.nedgame.nl/feeds/nieuwsbrief-merchandise.xml"
+    }
+  ]
+}
