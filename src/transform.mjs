@@ -1,78 +1,130 @@
-import fs from "fs";
+
+import fs from "node:fs/promises";
+import path from "node:path";
 import fetch from "node-fetch";
 import { XMLParser } from "fast-xml-parser";
 
-const config = JSON.parse(fs.readFileSync("feeds.config.json", "utf-8"));
-const parser = new XMLParser();
+const __dirname = path.dirname(new URL(import.meta.url).pathname);
+const CONFIG_PATH = path.join(__dirname, "..", "feeds.config.json");
+const OUT_DIR = path.join(__dirname, "..", "public");
 
-async function fetchFeed(feed) {
-  console.log(`Fetching: ${feed.url}`);
-  const res = await fetch(feed.url);
-  const xml = await res.text();
-  const json = parser.parse(xml);
+function parseProducts(xmlText) {
+  const parser = new XMLParser({
+    ignoreAttributes: false,
+    cdataPropName: "__cdata",
+    trimValues: true
+  });
+  const obj = parser.parse(xmlText);
+  const items = obj?.rss?.items?.product ?? [];
+  const products = Array.isArray(items) ? items : [items];
+  const norm = (v) => {
+    if (v == null) return "";
+    if (typeof v === "object" && "__cdata" in v) return String(v.__cdata).trim();
+    return String(v).trim();
+  };
+  return products
+    .map(p => ({
+      id: norm(p.id),
+      title: norm(p.title),
+      link: norm(p.link),
+      image: norm(p.image_link),
+      price: parseFloat(norm(p.price).replace(",", "."))
+    }))
+    .filter(p => p.id && p.title && p.link);
+}
 
-  const products = json?.rss?.items?.product || [];
-  const mapped = products.map((p) => ({
-    id: p.id,
-    title: p.title,
-    link: p.link,
-    image: p.image_link,
-    price: p.price
-  }));
+function toRss({ site, title, link, description, items }) {
+  const pubDate = new Date().toUTCString();
+  const escape = (s) => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
 
-  // JSON opslaan
-  const jsonPath = `public/api/${feed.slug}.json`;
-  fs.mkdirSync("public/api", { recursive: true });
-  fs.writeFileSync(jsonPath, JSON.stringify(mapped, null, 2));
+  const itemXml = items.map(it => {
+    const desc = `<![CDATA[
+      <table style="width:100%; border-collapse:collapse;">
+        <tr>
+          <td style="width:120px; vertical-align:top;">
+            <img src="${it.image}" alt="${escape(it.title)}" style="max-width:120px;height:auto;" />
+          </td>
+          <td style="vertical-align:top; padding-left:10px;">
+            <p style="margin:0;font-weight:bold;">€ ${it.price.toFixed(2)}</p>
+            <p style="margin:8px 0 0 0;"><a href="${it.link}">Bekijk product</a></p>
+          </td>
+        </tr>
+      </table>
+    ]]>`;
+    const enclosure = it.image ? `<enclosure url="${it.image}" length="0" type="image/jpeg" />` : "";
+    return `
+      <item>
+        <title>${escape(it.title)}</title>
+        <link>${it.link}</link>
+        <guid isPermaLink="false">${escape(it.id)}</guid>
+        <pubDate>${pubDate}</pubDate>
+        <description>${desc}</description>
+        ${enclosure}
+      </item>`;
+  }).join("\n");
 
-  // RSS opnieuw schrijven (ActiveCampaign kan XML)
-  const rssItems = mapped.map((p) => `
-    <item>
-      <title><![CDATA[${p.title}]]></title>
-      <link>${p.link}</link>
-      <enclosure url="${p.image}" type="image/jpeg"/>
-      <guid>${p.id}</guid>
-      <description><![CDATA[Prijs: €${p.price}]]></description>
-    </item>
-  `).join("\n");
-
-  const rss = `<?xml version="1.0" encoding="UTF-8" ?>
-  <rss version="2.0">
-    <channel>
-      <title>${feed.title}</title>
-      <link>${feed.url}</link>
-      <description>${feed.title} feed</description>
-      ${rssItems}
-    </channel>
-  </rss>`;
-
-  const rssPath = `public/rss/${feed.slug}.xml`;
-  fs.mkdirSync("public/rss", { recursive: true });
-  fs.writeFileSync(rssPath, rss);
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>${escape(title || site.title)}</title>
+    <link>${link || site.link}</link>
+    <description>${escape(description || site.description)}</description>
+    <language>${site.language || "nl-NL"}</language>
+    <lastBuildDate>${pubDate}</lastBuildDate>
+    ${itemXml}
+  </channel>
+</rss>`;
 }
 
 async function main() {
+  const raw = await fs.readFile(CONFIG_PATH, "utf8");
+  const config = JSON.parse(raw);
+  await fs.mkdir(path.join(OUT_DIR, "rss"), { recursive: true });
+  await fs.mkdir(path.join(OUT_DIR, "api"), { recursive: true });
+
   for (const feed of config.feeds) {
     try {
-      await fetchFeed(feed);
-    } catch (err) {
-      console.error(`Error with ${feed.url}:`, err);
+      const res = await fetch(feed.source, { headers: { "User-Agent": "nedgame-ac-proxy/1.0" } });
+      if (!res.ok) throw new Error(`Fetch failed ${res.status}`);
+      const xml = await res.text();
+      const products = parseProducts(xml);
+
+      const jsonOut = {
+        title: feed.title,
+        source: feed.source,
+        generatedAt: new Date().toISOString(),
+        count: products.length,
+        products
+      };
+      await fs.writeFile(path.join(OUT_DIR, "api", `${feed.slug}.json`), JSON.stringify(jsonOut, null, 2), "utf8");
+
+      const rssXml = toRss({
+        site: config.site,
+        title: feed.title,
+        link: config.site.link,
+        description: `${feed.title} via Nedgame proxy feed`,
+        items: products
+      });
+      await fs.writeFile(path.join(OUT_DIR, "rss", `${feed.slug}.xml`), rssXml, "utf8");
+
+      console.log(`Generated: ${feed.slug} (${products.length} items)`);
+    } catch (e) {
+      console.error(`Error on ${feed.slug}:`, e.message);
     }
   }
 
-  // Index maken
-  const indexHtml = `
-  <html>
-    <head><title>Nedgame AC Proxy</title></head>
-    <body>
-      <h1>Nedgame feeds</h1>
-      <ul>
-        ${config.feeds.map(f => `<li><a href="/rss/${f.slug}.xml">${f.title} (RSS)</a> | <a href="/api/${f.slug}.json">JSON</a></li>`).join("\n")}
-      </ul>
-    </body>
-  </html>`;
-
-  fs.writeFileSync("public/index.html", indexHtml);
+  const indexHtml = `<!doctype html>
+<html lang="nl"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>${config.site.title} – GitHub Pages</title></head>
+<body>
+  <h1>${config.site.title}</h1>
+  <p>Proxy-output voor ActiveCampaign:</p>
+  <ul>
+    ${config.feeds.map(f => `<li><a href="./rss/${f.slug}.xml">RSS: ${f.title}</a> · <a href="./api/${f.slug}.json">JSON: ${f.title}</a></li>`).join("")}
+  </ul>
+</body></html>`;
+  await fs.writeFile(path.join(OUT_DIR, "index.html"), indexHtml, "utf8");
 }
 
-main();
+main().catch(err => { console.error(err); process.exit(1); });
