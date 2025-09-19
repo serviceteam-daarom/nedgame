@@ -10,25 +10,29 @@
       "slug": "pre-orders",
       "title": "Nedgame Pre-orders",
       "source": "https://www.nedgame.nl/feeds/nieuwsbrief-pre-orders.xml",
-      "imageFallbackType": "image/jpeg"
+      "default_per_row": 3,
+      "row_variants": [1, 2, 3, 4]
     },
     {
       "slug": "nieuw-binnen",
       "title": "Nedgame Nieuw Binnen",
       "source": "https://www.nedgame.nl/feeds/nieuwsbrief-nieuw-binnen.xml",
-      "imageFallbackType": "image/jpeg"
+      "default_per_row": 3,
+      "row_variants": [1, 2, 3, 4]
     },
     {
       "slug": "best-verkocht",
       "title": "Nedgame Best Verkocht",
       "source": "https://www.nedgame.nl/feeds/nieuwsbrief-best-verkocht.xml",
-      "imageFallbackType": "image/jpeg"
+      "default_per_row": 3,
+      "row_variants": [1, 2, 3, 4]
     },
     {
       "slug": "merchandise",
       "title": "Nedgame Merchandise",
       "source": "https://www.nedgame.nl/feeds/nieuwsbrief-merchandise.xml",
-      "imageFallbackType": "image/jpeg"
+      "default_per_row": 3,
+      "row_variants": [1, 2, 3, 4]
     }
   ]
 }
