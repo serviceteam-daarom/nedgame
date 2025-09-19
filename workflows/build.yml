@@ -4,7 +4,7 @@ on:
   push:
     branches: [ main, master ]
   schedule:
-    - cron: "0 * * * *"  # elk uur
+    - cron: "0 * * * *"
   workflow_dispatch:
 
 permissions:
@@ -23,7 +23,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
 
       - name: Install deps
         run: npm ci || npm install
