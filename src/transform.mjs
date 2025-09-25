@@ -391,11 +391,24 @@ async function main() {
   .col-btn:hover {
     color: #334155;
   }
-  
+
   .col-btn.active {
     background: white;
     color: #6366f1;
     box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+  }
+
+  .col-btn.disabled {
+    color: #94a3b8;
+    opacity: 0.55;
+    cursor: not-allowed;
+    background: transparent;
+    box-shadow: none;
+    pointer-events: none;
+  }
+
+  .col-btn.disabled:hover {
+    color: #94a3b8;
   }
   
   .mobile-toggle {
@@ -688,7 +701,14 @@ async function main() {
     ${indexLinks.map(({ feed, files }) => {
       const products = previewData[feed.slug] || [];
       const defaultCols = feed.default_per_row || 3;
-      const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+      const disabledColumns = new Set([1, 2, 3]);
+      const availableColumns = feed.row_variants.filter(cols => !disabledColumns.has(cols));
+      const initialCols = availableColumns.includes(defaultCols)
+        ? defaultCols
+        : (availableColumns[0] ?? defaultCols);
+      const initialFile = initialCols === defaultCols
+        ? `${feed.slug}.xml`
+        : `${feed.slug}-r${initialCols}.xml`;
       
       // HTML escaping functie voor product titels
       const escHtml = (str) => String(str)
@@ -715,13 +735,22 @@ async function main() {
               <label for="mobile-${feed.slug}">📱 Mobile preview</label>
             </div>
             <div class="columns-selector" data-feed="${feed.slug}">
-              ${feed.row_variants.map(cols => `
-                <button class="col-btn ${cols === defaultCols ? 'active' : ''}" 
-                        data-cols="${cols}" 
+              ${feed.row_variants.map(cols => {
+                const isDisabled = disabledColumns.has(cols);
+                const classes = [
+                  'col-btn',
+                  cols === initialCols ? 'active' : '',
+                  isDisabled ? 'disabled' : ''
+                ].filter(Boolean).join(' ');
+                const disabledAttr = isDisabled ? 'disabled aria-disabled="true"' : '';
+                return `
+                <button class="${classes}"
+                        data-cols="${cols}"
+                        ${disabledAttr}
                         onclick="updateColumns('${feed.slug}', ${cols})">
                   ${cols} ${cols === 1 ? 'kolom' : 'kolommen'}
                 </button>
-              `).join('')}
+              `;}).join('')}
             </div>
             <a href="./api/${feed.slug}.json" class="json-btn">JSON</a>
           </div>
@@ -731,7 +760,7 @@ async function main() {
           <input type="text" 
                  class="url-input" 
                  id="url-${feed.slug}" 
-                 value="\${window.location.origin}/rss/${feed.slug}.xml" 
+                 value="\${window.location.origin}/rss/${initialFile}"
                  readonly />
           <button class="copy-btn" onclick="copyUrl('${feed.slug}')">
             <span class="copy-text">📋 Kopieer URL</span>
@@ -750,10 +779,10 @@ async function main() {
               <div class="email-header">🎮 Nedgame Nieuwsbrief</div>
               <div class="email-content">
                 ${products.length > 0 ? `
-                  <table class="email-preview-table cols-${defaultCols}" id="preview-${feed.slug}" role="presentation" cellpadding="0" cellspacing="0" border="0">
+                  <table class="email-preview-table cols-${initialCols}" id="preview-${feed.slug}" role="presentation" cellpadding="0" cellspacing="0" border="0">
                     ${(() => {
                       const rows = [];
-                      const cols = defaultCols;
+                      const cols = initialCols;
                       for (let i = 0; i < Math.min(8, products.length); i += cols) {
                         const rowProducts = products.slice(i, i + cols);
                         rows.push(`
@@ -789,6 +818,8 @@ async function main() {
   <div class="toast" id="toast">✅ URL gekopieerd!</div>
   
   <script>
+    const DISABLED_COLUMNS = [1, 2, 3];
+
     // Initialize with actual base URL
     document.addEventListener('DOMContentLoaded', function() {
       const baseUrl = window.location.origin + window.location.pathname.replace(/index\\.html$/, '');
@@ -798,10 +829,13 @@ async function main() {
         input.value = baseUrl + 'rss/' + defaultFile;
       });
     });
-    
+
     function getCurrentCols(feedSlug) {
       const activeBtn = document.querySelector(\`.columns-selector[data-feed="\${feedSlug}"] .col-btn.active\`);
-      return activeBtn ? parseInt(activeBtn.dataset.cols) : 3;
+      if (activeBtn) return parseInt(activeBtn.dataset.cols);
+      const availableBtn = Array.from(document.querySelectorAll(\`.columns-selector[data-feed="\${feedSlug}"] .col-btn\`))
+        .find(btn => !btn.classList.contains('disabled'));
+      return availableBtn ? parseInt(availableBtn.dataset.cols) : 3;
     }
     
     function getFileName(feedSlug, cols) {
@@ -823,10 +857,16 @@ async function main() {
     }
     
     function updateColumns(feedSlug, cols) {
+      if (DISABLED_COLUMNS.includes(cols)) {
+        return;
+      }
+
       // Update button states
       const selector = document.querySelector(\`.columns-selector[data-feed="\${feedSlug}"]\`);
       selector.querySelectorAll('.col-btn').forEach(btn => {
-        btn.classList.toggle('active', parseInt(btn.dataset.cols) === cols);
+        const btnCols = parseInt(btn.dataset.cols);
+        const shouldBeActive = btnCols === cols && !btn.classList.contains('disabled');
+        btn.classList.toggle('active', shouldBeActive);
       });
       
       // Update preview table
