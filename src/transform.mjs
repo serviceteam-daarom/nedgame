@@ -155,6 +155,8 @@ function rowHTML(productsInRow, perRow) {
   
   // Voor 2 kolommen: normale table layout
   if (perRow === 2) {
+    const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    
     const cells = productsInRow.map(p => `
       <td style="width: 50%; padding: 10px; border: 1px solid #ddd; vertical-align: top;">
         <a href="${p.link}" style="text-decoration:none; color:#000; display:block;">
@@ -190,6 +192,8 @@ function rowHTML(productsInRow, perRow) {
   }
   
   // Voor 1 kolom: simpel table layout
+  const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  
   const cells = productsInRow.map(p => `
     <tr>
       <td style="padding: 10px; border: 1px solid #ddd; vertical-align: top;">
