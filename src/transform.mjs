@@ -52,7 +52,7 @@ function productCardHTML(p, perRow) {
   
   return `
     <!--[if mso]>
-    <td style="vertical-align:top; padding:10px;">
+    <td style="vertical-align:top; padding:5px;">
     <![endif]-->
     <!--[if !mso]><!-->
     <div style="
@@ -62,13 +62,13 @@ function productCardHTML(p, perRow) {
       min-width: ${maxWidth}; 
       vertical-align: top;
       font-size: 14px;
-      padding: 10px;
+      padding: 5px;
       box-sizing: border-box;
     ">
     <!--<![endif]-->
       <table style="width: 100%; border-collapse: collapse;">
         <tr>
-          <td style="padding: 10px; border: 1px solid #ddd; vertical-align: top;">
+          <td style="padding: 5px; vertical-align: top;">
             <a href="${p.link}" style="text-decoration:none; color:#000; display:block;">
               <div style="width:100%; text-align:center;">
                 <img src="${p.image}" alt="${esc(p.title)}"
@@ -158,7 +158,7 @@ function rowHTML(productsInRow, perRow) {
     const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
     
     const cells = productsInRow.map(p => `
-      <td style="width: 50%; padding: 10px; border: 1px solid #ddd; vertical-align: top;">
+      <td style="width: 50%; padding: 5px; vertical-align: top;">
         <a href="${p.link}" style="text-decoration:none; color:#000; display:block;">
           <div style="width:100%; text-align:center;">
             <img src="${p.image}" alt="${esc(p.title)}"
@@ -176,7 +176,7 @@ function rowHTML(productsInRow, perRow) {
     
     const emptyCells = perRow - productsInRow.length;
     const emptyHTML = emptyCells > 0 ?
-      Array(emptyCells).fill(`<td style="width: 50%; padding: 10px;"></td>`).join('') : '';
+      Array(emptyCells).fill(`<td style="width: 50%; padding: 5px;"></td>`).join('') : '';
     
     return `
       <![CDATA[
@@ -196,7 +196,7 @@ function rowHTML(productsInRow, perRow) {
   
   const cells = productsInRow.map(p => `
     <tr>
-      <td style="padding: 10px; border: 1px solid #ddd; vertical-align: top;">
+      <td style="padding: 5px; vertical-align: top;">
         <a href="${p.link}" style="text-decoration:none; color:#000; display:block;">
           <div style="width:100%; text-align:center;">
             <img src="${p.image}" alt="${esc(p.title)}"
