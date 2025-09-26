@@ -44,11 +44,11 @@ function productCardHTML(p, perRow) {
     .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
   // Bereken max-width voor fluid hybrid
-  // 4 kolommen: 150px elk = 600px totaal (past in container)
-  // 2 kolommen: 300px elk = 600px totaal 
-  const maxWidth = perRow === 4 ? '150px' : 
-                   perRow === 3 ? '200px' : 
-                   perRow === 2 ? '300px' : '100%';
+  // 4 kolommen: 150px is te klein, laten we 140px proberen voor 600px container
+  // Of beter: gebruik percentages met minimum widths
+  const maxWidth = perRow === 4 ? '140px' : 
+                   perRow === 3 ? '180px' : 
+                   perRow === 2 ? '280px' : '100%';
   
   return `
     <!--[if mso]>
