@@ -68,7 +68,7 @@ function productCardHTML(p, perRow) {
     <!--<![endif]-->
       <table style="width: 100%; border-collapse: collapse;">
         <tr>
-          <td style="padding: 5px; vertical-align: top;">
+          <td style="padding: 5px; border: 0px; vertical-align: top;">
             <a href="${p.link}" style="text-decoration:none; color:#000; display:block;">
               <div style="width:100%; text-align:center;">
                 <img src="${p.image}" alt="${esc(p.title)}"
@@ -158,7 +158,7 @@ function rowHTML(productsInRow, perRow) {
     const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
     
     const cells = productsInRow.map(p => `
-      <td style="width: 50%; padding: 5px; vertical-align: top;">
+      <td style="width: 50%; padding: 5px; border: 0px; vertical-align: top;">
         <a href="${p.link}" style="text-decoration:none; color:#000; display:block;">
           <div style="width:100%; text-align:center;">
             <img src="${p.image}" alt="${esc(p.title)}"
@@ -196,7 +196,7 @@ function rowHTML(productsInRow, perRow) {
   
   const cells = productsInRow.map(p => `
     <tr>
-      <td style="padding: 5px; vertical-align: top;">
+      <td style="padding: 5px; border: 0px; vertical-align: top;">
         <a href="${p.link}" style="text-decoration:none; color:#000; display:block;">
           <div style="width:100%; text-align:center;">
             <img src="${p.image}" alt="${esc(p.title)}"
