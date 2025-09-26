@@ -74,10 +74,10 @@ function productCardHTML(p, perRow) {
                 <img src="${p.image}" alt="${esc(p.title)}"
                      style="width:100%; max-width:180px; height:180px; object-fit:contain; display:inline-block; margin-bottom:8px;" />
               </div>
-              <div style="margin:0; font-weight:bold; font-size:14px; line-height:1.3; text-align:center; min-height:40px; font-family: Arial, sans-serif;">
+              <div style="margin:0; font-weight:bold; font-size:14px; line-height:1.3; text-align:center; min-height:40px; font-family: Arial, sans-serif; color: #00669b;">
                 ${esc(p.title)}
               </div>
-              <div style="margin-top:4px; color:#e60000; font-weight:bold; text-align:center; font-size:16px; font-family: Arial, sans-serif;">
+              <div style="margin-top:4px; color:#000000; font-weight:bold; text-align:center; font-size:16px; font-family: Arial, sans-serif;">
                 € ${isFinite(p.price) ? p.price.toFixed(2) : esc(p.price)}
               </div>
             </a>
@@ -164,10 +164,10 @@ function rowHTML(productsInRow, perRow) {
             <img src="${p.image}" alt="${esc(p.title)}"
                  style="width:100%; max-width:180px; height:180px; object-fit:contain; display:inline-block; margin-bottom:8px;" />
           </div>
-          <div style="margin:0; font-weight:bold; font-size:14px; line-height:1.3; text-align:center; min-height:40px; font-family: Arial, sans-serif;">
+          <div style="margin:0; font-weight:bold; font-size:14px; line-height:1.3; text-align:center; min-height:40px; font-family: Arial, sans-serif; color: #00669b;">
             ${esc(p.title)}
           </div>
-          <div style="margin-top:4px; color:#e60000; font-weight:bold; text-align:center; font-size:16px; font-family: Arial, sans-serif;">
+          <div style="margin-top:4px; color:#000000; font-weight:bold; text-align:center; font-size:16px; font-family: Arial, sans-serif;">
             € ${isFinite(p.price) ? p.price.toFixed(2) : esc(p.price)}
           </div>
         </a>
@@ -202,10 +202,10 @@ function rowHTML(productsInRow, perRow) {
             <img src="${p.image}" alt="${esc(p.title)}"
                  style="width:100%; max-width:180px; height:180px; object-fit:contain; display:inline-block; margin-bottom:8px;" />
           </div>
-          <div style="margin:0; font-weight:bold; font-size:14px; line-height:1.3; text-align:center; min-height:40px; font-family: Arial, sans-serif;">
+          <div style="margin:0; font-weight:bold; font-size:14px; line-height:1.3; text-align:center; min-height:40px; font-family: Arial, sans-serif; color: #00669b;">
             ${esc(p.title)}
           </div>
-          <div style="margin-top:4px; color:#e60000; font-weight:bold; text-align:center; font-size:16px; font-family: Arial, sans-serif;">
+          <div style="margin-top:4px; color:#000000; font-weight:bold; text-align:center; font-size:16px; font-family: Arial, sans-serif;">
             € ${isFinite(p.price) ? p.price.toFixed(2) : esc(p.price)}
           </div>
         </a>
@@ -680,11 +680,12 @@ async function main() {
     text-align: center;
     min-height: 40px;
     font-family: Arial, sans-serif;
+    color: #00669b;
   }
   
   .fluid-product-price {
     margin-top: 4px;
-    color: #e60000;
+    color: #000000;
     font-weight: bold;
     text-align: center;
     font-size: 16px;
@@ -748,7 +749,7 @@ async function main() {
   
   .email-product-price {
     margin-top: 4px;
-    color: #e60000;
+    color: #000000;
     font-weight: bold;
     text-align: center;
     font-size: 16px;
