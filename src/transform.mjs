@@ -592,16 +592,18 @@ async function main() {
     font-size: 14px;
     line-height: 1.3;
     text-align: left;
-    color: #000;
+    color: #00669b;
     min-height: 40px;
+    text-align: center;
   }
   
   .email-product-price {
     margin-top: 4px;
-    color: #e60000;
-    font-weight: bold;
+    color: #334155;
+    font-weight: 500;
     text-align: left;
-    font-size: 16px;
+    font-size: 12px;
+    text-align: center;
   }
   
   /* Mobile preview mode */
