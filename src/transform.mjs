@@ -27,36 +27,12 @@ function parseProducts(xmlText) {
     return String(v).trim();
   };
 
-  const getBrand = (product) => {
-    const brandFields = [
-      "brand",
-      "merk",
-      "manufacturer",
-      "publisher",
-      "author",
-      "studio",
-      "label",
-      "supplier"
-    ];
-
-    for (const field of brandFields) {
-      const value = product?.[field];
-      if (value != null) {
-        const normalized = norm(value);
-        if (normalized) return normalized;
-      }
-    }
-
-    return "";
-  };
-
   return products
     .map(p => ({
       id: norm(p.id),
       title: norm(p.title),
       link: norm(p.link),
       image: norm(p.image_link),
-      brand: getBrand(p),
       price: parseFloat(norm(p.price).replace(",", "."))
     }))
     .filter(p => p.id && p.title && p.link);
@@ -69,10 +45,7 @@ function productCardHTML(p, perRow) {
 
   // Bereken width percentages voor verschillende kolom aantallen
   const widthPercent = Math.floor(100 / perRow);
-  const priceText = Number.isFinite(p.price)
-    ? p.price.toFixed(2).replace('.', ',')
-    : esc(p.price || '-.--');
-
+  
   return `
     <!--[if mso]>
     <td style="vertical-align:top; width:${widthPercent}%; padding:10px;">
@@ -81,18 +54,15 @@ function productCardHTML(p, perRow) {
     <td class="product-cell" style="vertical-align:top; width:${widthPercent}%; padding:10px;">
     <!--<![endif]-->
       <a href="${p.link}" style="text-decoration:none; color:#000; display:block;">
-        <div style="border:1px solid #e2e8f0; border-radius:12px; padding:16px; background:#ffffff; display:flex; flex-direction:column; align-items:center; text-align:center; gap:12px; height:100%; box-shadow:0 2px 6px rgba(15,23,42,0.08);">
-          <div style="width:100%; background:#f8fafc; border-radius:10px; padding:12px; display:flex; justify-content:center; align-items:center; min-height:180px;">
-            <img src="${p.image}" alt="${esc(p.title)}"
-                 style="width:100%; max-width:180px; height:160px; object-fit:contain; display:block;" />
-          </div>
-          ${p.brand ? `<div style="font-size:12px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:#64748b;">${esc(p.brand)}</div>` : ""}
-          <div style="margin:0; font-weight:700; font-size:15px; line-height:1.35; color:#0f172a;">
-            ${esc(p.title)}
-          </div>
-          <div style="margin-top:auto; color:#111827; font-weight:700; font-size:18px;">
-            € ${priceText}
-          </div>
+        <div style="width:100%; text-align:center;">
+          <img src="${p.image}" alt="${esc(p.title)}"
+               style="width:100%; max-width:180px; height:180px; object-fit:contain; display:inline-block; margin-bottom:8px;" />
+        </div>
+        <div style="margin:0; font-weight:bold; font-size:14px; line-height:1.3; text-align:left; min-height:40px;">
+          ${esc(p.title)}
+        </div>
+        <div style="margin-top:4px; color:#e60000; font-weight:bold; text-align:left; font-size:16px;">
+          € ${isFinite(p.price) ? p.price.toFixed(2) : esc(p.price)}
         </div>
       </a>
     </td>
@@ -587,9 +557,8 @@ async function main() {
   
   .email-preview-table td {
     vertical-align: top;
-    padding: 12px;
-    text-align: center;
-    height: 100%;
+    padding: 10px;
+    text-align: left;
   }
   
   .email-preview-table.cols-1 td { width: 100%; }
@@ -599,71 +568,40 @@ async function main() {
   
   .email-product-link {
     text-decoration: none;
-    color: inherit;
+    color: #000;
     display: block;
-    height: 100%;
   }
-
-  .email-product-card {
-    border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    background: #ffffff;
-    padding: 16px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    gap: 12px;
-    height: 100%;
-    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  
+  .email-product-link:hover .email-product-title {
+    color: #0066cc;
+    text-decoration: underline;
   }
-
-  .email-product-link:hover .email-product-card {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.12);
-  }
-
-  .email-product-image-wrapper {
-    width: 100%;
-    background: #f8fafc;
-    border-radius: 10px;
-    padding: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 180px;
-  }
-
+  
   .email-product-img {
     width: 100%;
     max-width: 180px;
-    height: 160px;
+    height: 180px;
     object-fit: contain;
-    display: block;
+    display: inline-block;
+    margin-bottom: 8px;
   }
-
-  .email-product-brand {
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: #64748b;
-  }
-
+  
   .email-product-title {
     margin: 0;
-    font-weight: 700;
-    font-size: 15px;
-    line-height: 1.35;
-    color: #0f172a;
+    font-weight: bold;
+    font-size: 14px;
+    line-height: 1.3;
+    text-align: left;
+    color: #000;
+    min-height: 40px;
   }
-
+  
   .email-product-price {
-    margin-top: auto;
-    color: #111827;
-    font-weight: 700;
-    font-size: 18px;
+    margin-top: 4px;
+    color: #e60000;
+    font-weight: bold;
+    text-align: left;
+    font-size: 16px;
   }
   
   /* Mobile preview mode */
@@ -849,26 +787,17 @@ async function main() {
                         const rowProducts = products.slice(i, i + cols);
                         rows.push(`
                           <tr>
-                            ${rowProducts.map(p => {
-                              const brand = p.brand ? escHtml(p.brand) : '';
-                              const priceText = (typeof p.price === 'number' && isFinite(p.price))
-                                ? p.price.toFixed(2).replace('.', ',')
-                                : '-.--';
-                              return `
-                                <td>
-                                  <a href="${p.link}" class="email-product-link">
-                                    <div class="email-product-card">
-                                      <div class="email-product-image-wrapper">
-                                        <img src="${p.image}" alt="${escHtml(p.title)}" class="email-product-img" />
-                                      </div>
-                                      ${brand ? `<div class="email-product-brand">${brand}</div>` : ''}
-                                      <div class="email-product-title">${escHtml(p.title)}</div>
-                                      <div class="email-product-price">€ ${priceText}</div>
-                                    </div>
-                                  </a>
-                                </td>
-                              `;
-                            }).join('')}
+                            ${rowProducts.map(p => `
+                              <td>
+                                <a href="${p.link}" class="email-product-link">
+                                  <div style="text-align:center;">
+                                    <img src="${p.image}" alt="${escHtml(p.title)}" class="email-product-img" />
+                                  </div>
+                                  <div class="email-product-title">${escHtml(p.title)}</div>
+                                  <div class="email-product-price">€ ${p.price ? p.price.toFixed(2) : '-.--'}</div>
+                                </a>
+                              </td>
+                            `).join('')}
                             ${rowProducts.length < cols ? '<td></td>'.repeat(cols - rowProducts.length) : ''}
                           </tr>
                         `);
@@ -956,21 +885,14 @@ async function main() {
             const cells = rowProducts.map(p => {
               // Escape HTML
               const escTitle = p.title.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-              const escBrand = p.brand ? p.brand.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') : '';
-              const priceText = (typeof p.price === 'number' && isFinite(p.price))
-                ? p.price.toFixed(2).replace('.', ',')
-                : '-.--';
               return \`
                 <td>
                   <a href="\${p.link}" class="email-product-link">
-                    <div class="email-product-card">
-                      <div class="email-product-image-wrapper">
-                        <img src="\${p.image}" alt="\${escTitle}" class="email-product-img" />
-                      </div>
-                      \${escBrand ? '<div class="email-product-brand">' + escBrand + '</div>' : ''}
-                      <div class="email-product-title">\${escTitle}</div>
-                      <div class="email-product-price">€ \${priceText}</div>
+                    <div style="text-align:center;">
+                      <img src="\${p.image}" alt="\${escTitle}" class="email-product-img" />
                     </div>
+                    <div class="email-product-title">\${escTitle}</div>
+                    <div class="email-product-price">€ \${p.price ? p.price.toFixed(2) : '-.--'}</div>
                   </a>
                 </td>
               \`;
