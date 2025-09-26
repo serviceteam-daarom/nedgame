@@ -181,7 +181,7 @@ function rowHTML(productsInRow, perRow) {
     return `
       <![CDATA[
         <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"
-               style="border-collapse:collapse; width:100%; max-width:600px; margin: 0 auto; font-family: Arial, sans-serif;">
+               style="border-collapse:collapse; width:100%; max-width:580px; margin: 0 auto; font-family: Arial, sans-serif; table-layout: fixed;">
           <tr>
             ${cells}
             ${emptyHTML}
