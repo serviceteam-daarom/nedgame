@@ -61,14 +61,14 @@ function productCardHTML(p, perRow) {
   `.trim();
 }
 
-/** Table-based responsive layout - GEFIXED voor 4 kolommen probleem */
+/** Hybrid responsive layout - table voor Outlook, div voor moderne clients */
 function rowHTML(productsInRow, perRow) {
   const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   
   if (perRow === 4) {
-    // GEFIXED: 23% width + box-sizing + kleiner padding + table-layout fixed
-    const cells = productsInRow.map(p => `
-      <td width="23%" style="width: 23%; padding: 3px; border: 0px; vertical-align: top; box-sizing: border-box;">
+    // 4 kolommen -> 2x2 op mobiel met hybrid approach
+    const outlookCells = productsInRow.map(p => `
+      <td width="23%" style="width: 23%; padding: 3px; border: 0px; vertical-align: top;">
         <a href="${p.link}" style="text-decoration:none; color:#000; display:block;">
           <div style="width:100%; text-align:center;">
             <img src="${p.image}" alt="${esc(p.title)}"
@@ -84,26 +84,51 @@ function rowHTML(productsInRow, perRow) {
       </td>
     `).join("");
     
+    const modernCells = productsInRow.map(p => `
+      <div style="display: inline-block; width: 100%; max-width: 140px; min-width: 140px; vertical-align: top; font-size: 14px; padding: 3px; box-sizing: border-box;">
+        <a href="${p.link}" style="text-decoration:none; color:#000; display:block;">
+          <div style="width:100%; text-align:center;">
+            <img src="${p.image}" alt="${esc(p.title)}"
+                 style="width:100%; max-width:110px; height:110px; object-fit:contain; display:inline-block; margin-bottom:6px;" />
+          </div>
+          <div style="margin:0; font-weight:bold; font-size:11px; line-height:1.2; text-align:center; min-height:30px; font-family: Arial, sans-serif; color: #00669b;">
+            ${esc(p.title)}
+          </div>
+          <div style="margin-top:3px; color:#000000; font-weight:bold; text-align:center; font-size:13px; font-family: Arial, sans-serif;">
+            € ${isFinite(p.price) ? p.price.toFixed(2) : esc(p.price)}
+          </div>
+        </a>
+      </div>
+    `).join("");
+    
     const emptyCells = 4 - productsInRow.length;
-    const emptyHTML = emptyCells > 0 ? 
-      Array(emptyCells).fill(`<td width="23%" style="width: 23%; padding: 3px; border: 0px; vertical-align: top; box-sizing: border-box;">&nbsp;</td>`).join('') : '';
+    const emptyOutlookHTML = emptyCells > 0 ? 
+      Array(emptyCells).fill(`<td width="23%" style="width: 23%; padding: 3px; border: 0px; vertical-align: top;">&nbsp;</td>`).join('') : '';
     
     return `
       <![CDATA[
+        <!--[if mso]>
         <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"
                style="border-collapse:collapse; width:100%; max-width:560px; margin: 0 auto; font-family: Arial, sans-serif; table-layout: fixed;">
           <tr>
-            ${cells}
-            ${emptyHTML}
+            ${outlookCells}
+            ${emptyOutlookHTML}
           </tr>
         </table>
+        <![endif]-->
+        <!--[if !mso]><!-->
+        <div style="width: 100%; max-width: 560px; margin: 0 auto; font-size: 0; text-align: center; font-family: Arial, sans-serif;">
+          ${modernCells}
+        </div>
+        <!--<![endif]-->
       ]]>
     `.trim();
   }
   
   if (perRow === 3) {
-    const cells = productsInRow.map(p => `
-      <td width="32%" style="width: 32%; padding: 4px; border: 0px; vertical-align: top; box-sizing: border-box;">
+    // 3 kolommen hybrid
+    const outlookCells = productsInRow.map(p => `
+      <td width="32%" style="width: 32%; padding: 4px; border: 0px; vertical-align: top;">
         <a href="${p.link}" style="text-decoration:none; color:#000; display:block;">
           <div style="width:100%; text-align:center;">
             <img src="${p.image}" alt="${esc(p.title)}"
@@ -119,23 +144,48 @@ function rowHTML(productsInRow, perRow) {
       </td>
     `).join("");
     
+    const modernCells = productsInRow.map(p => `
+      <div style="display: inline-block; width: 100%; max-width: 180px; min-width: 180px; vertical-align: top; font-size: 14px; padding: 4px; box-sizing: border-box;">
+        <a href="${p.link}" style="text-decoration:none; color:#000; display:block;">
+          <div style="width:100%; text-align:center;">
+            <img src="${p.image}" alt="${esc(p.title)}"
+                 style="width:100%; max-width:140px; height:140px; object-fit:contain; display:inline-block; margin-bottom:7px;" />
+          </div>
+          <div style="margin:0; font-weight:bold; font-size:12px; line-height:1.2; text-align:center; min-height:32px; font-family: Arial, sans-serif; color: #00669b;">
+            ${esc(p.title)}
+          </div>
+          <div style="margin-top:3px; color:#000000; font-weight:bold; text-align:center; font-size:14px; font-family: Arial, sans-serif;">
+            € ${isFinite(p.price) ? p.price.toFixed(2) : esc(p.price)}
+          </div>
+        </a>
+      </div>
+    `).join("");
+    
     const emptyCells = 3 - productsInRow.length;
-    const emptyHTML = emptyCells > 0 ?
-      Array(emptyCells).fill(`<td width="32%" style="width: 32%; padding: 4px; border: 0px; vertical-align: top; box-sizing: border-box;">&nbsp;</td>`).join('') : '';
+    const emptyOutlookHTML = emptyCells > 0 ?
+      Array(emptyCells).fill(`<td width="32%" style="width: 32%; padding: 4px; border: 0px; vertical-align: top;">&nbsp;</td>`).join('') : '';
     
     return `
       <![CDATA[
+        <!--[if mso]>
         <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"
                style="border-collapse:collapse; width:100%; max-width:560px; margin: 0 auto; font-family: Arial, sans-serif; table-layout: fixed;">
           <tr>
-            ${cells}
-            ${emptyHTML}
+            ${outlookCells}
+            ${emptyOutlookHTML}
           </tr>
         </table>
+        <![endif]-->
+        <!--[if !mso]><!-->
+        <div style="width: 100%; max-width: 560px; margin: 0 auto; font-size: 0; text-align: center; font-family: Arial, sans-serif;">
+          ${modernCells}
+        </div>
+        <!--<![endif]-->
       ]]>
     `.trim();
   }
   
+  // Voor 2 kolommen: blijf bij table (werkt goed)
   if (perRow === 2) {
     const cells = productsInRow.map(p => `
       <td style="width: 48%; padding: 5px; border: 0px; vertical-align: top; box-sizing: border-box;">
