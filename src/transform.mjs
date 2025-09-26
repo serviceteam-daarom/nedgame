@@ -48,14 +48,15 @@ function productCardHTML(p, perRow) {
   
   return `
     <!--[if mso]>
-    <td style="vertical-align:top; width:${widthPercent}%; padding:10px;">
+    <td width="${widthPercent}%" style="vertical-align:top; width:${widthPercent}%; padding:10px;">
     <![endif]-->
     <!--[if !mso]><!-->
-    <td class="product-cell" style="vertical-align:top; width:${widthPercent}%; padding:10px;">
+    <td data-product-cell="true" width="${widthPercent}%" style="vertical-align:top; width:${widthPercent}%; padding:10px;">
     <!--<![endif]-->
       <a href="${p.link}" style="text-decoration:none; color:#000; display:block;">
         <div style="width:100%; text-align:center;">
           <img src="${p.image}" alt="${esc(p.title)}"
+               data-product-image="true"
                style="width:100%; max-width:180px; height:180px; object-fit:contain; display:inline-block; margin-bottom:8px;" />
         </div>
         <div style="margin:0; font-weight:bold; font-size:14px; line-height:1.3; text-align:left; min-height:40px;">
@@ -77,7 +78,7 @@ function rowHTML(productsInRow, perRow) {
     for (let i = 0; i < productsInRow.length; i += 2) {
       const pair = productsInRow.slice(i, i + 2);
       const cells = pair.map(p => productCardHTML(p, perRow)).join("");
-      const emptyCell = pair.length < 2 ? `<td style="width:50%;"></td>` : '';
+      const emptyCell = pair.length < 2 ? `<td width="50%" style="width:50%; padding:10px;"></td>` : '';
       rows.push(`<tr>${cells}${emptyCell}</tr>`);
     }
     
@@ -85,20 +86,18 @@ function rowHTML(productsInRow, perRow) {
       <![CDATA[
         <style type="text/css">
           @media only screen and (max-width: 600px) {
-            .product-cell {
+            table[data-responsive="true"] td[data-product-cell="true"] {
               width: 100% !important;
               display: block !important;
             }
-            .responsive-table {
-              width: 100% !important;
-            }
-            .product-cell img {
+            table[data-responsive="true"] img[data-product-image="true"] {
               max-width: 150px !important;
               height: 150px !important;
             }
           }
         </style>
-        <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width:100%; border-collapse:collapse;" class="responsive-table">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"
+               style="border-collapse:collapse; width:100%;" data-responsive="true">
           ${rows.join('')}
         </table>
       ]]>
@@ -108,33 +107,34 @@ function rowHTML(productsInRow, perRow) {
   // Voor andere aantallen kolommen: normale single row
   const cells = productsInRow.map(p => productCardHTML(p, perRow)).join("");
   const emptyCells = perRow - productsInRow.length;
-  const emptyHTML = emptyCells > 0 ? 
-    Array(emptyCells).fill(`<td style="width:${Math.floor(100/perRow)}%;"></td>`).join('') : '';
+  const emptyHTML = emptyCells > 0 ?
+    Array(emptyCells).fill(`<td width="${Math.floor(100/perRow)}%" style="width:${Math.floor(100/perRow)}%; padding:10px;"></td>`).join('') : '';
   
   return `
     <![CDATA[
       <style type="text/css">
         @media only screen and (max-width: 600px) {
-          .product-cell {
+          table[data-responsive="true"] td[data-product-cell="true"] {
             width: ${perRow > 2 ? '50' : '100'}% !important;
             display: ${perRow > 2 ? 'inline-block' : 'block'} !important;
           }
-          .responsive-table {
+          table[data-responsive="true"] {
             width: 100% !important;
           }
-          .product-cell img {
+          table[data-responsive="true"] img[data-product-image="true"] {
             max-width: 150px !important;
             height: 150px !important;
           }
         }
         @media only screen and (max-width: 400px) {
-          .product-cell {
+          table[data-responsive="true"] td[data-product-cell="true"] {
             width: 100% !important;
             display: block !important;
           }
         }
       </style>
-      <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width:100%; border-collapse:collapse;" class="responsive-table">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"
+             style="border-collapse:collapse; width:100%;" data-responsive="true">
         <tr>
           ${cells}
           ${emptyHTML}
