@@ -652,8 +652,8 @@ async function main() {
   
   .fluid-product-card {
     width: 100%;
-    border: 1px solid #ddd;
-    padding: 10px;
+    border: 0px;
+    padding: 5px;
     text-align: center;
   }
   
@@ -708,9 +708,9 @@ async function main() {
   
   .email-preview-table td {
     vertical-align: top;
-    padding: 10px;
+    padding: 5px;
     text-align: left;
-    border: 1px solid #ddd;
+    border: 0px;
   }
   
   .email-preview-table.cols-1 td { width: 100%; }
