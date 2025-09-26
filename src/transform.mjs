@@ -38,127 +38,107 @@ function parseProducts(xmlText) {
     .filter(p => p.id && p.title && p.link);
 }
 
-/** Product card HTML met fluid hybrid responsive design voor 4x1 -> 2x2 */
+/** Product card HTML - niet meer gebruikt, maar behouden voor backward compatibility */
 function productCardHTML(p, perRow) {
   const esc = (s) => String(s)
     .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
-  // Bereken max-width voor fluid hybrid
-  // 4 kolommen: 150px is te klein, laten we 140px proberen voor 600px container
-  // Of beter: gebruik percentages met minimum widths
-  const maxWidth = perRow === 4 ? '140px' : 
-                   perRow === 3 ? '180px' : 
-                   perRow === 2 ? '280px' : '100%';
-  
   return `
-    <!--[if mso]>
-    <td style="vertical-align:top; padding:5px;">
-    <![endif]-->
-    <!--[if !mso]><!-->
-    <div style="
-      display: inline-block; 
-      width: 100%; 
-      max-width: ${maxWidth}; 
-      min-width: ${maxWidth}; 
-      vertical-align: top;
-      font-size: 14px;
-      padding: 5px;
-      box-sizing: border-box;
-    ">
-    <!--<![endif]-->
-      <table style="width: 100%; border-collapse: collapse;">
-        <tr>
-          <td style="padding: 5px; border: 0px; vertical-align: top;">
-            <a href="${p.link}" style="text-decoration:none; color:#000; display:block;">
-              <div style="width:100%; text-align:center;">
-                <img src="${p.image}" alt="${esc(p.title)}"
-                     style="width:100%; max-width:180px; height:180px; object-fit:contain; display:inline-block; margin-bottom:8px;" />
-              </div>
-              <div style="margin:0; font-weight:bold; font-size:14px; line-height:1.3; text-align:center; min-height:40px; font-family: Arial, sans-serif; color: #00669b;">
-                ${esc(p.title)}
-              </div>
-              <div style="margin-top:4px; color:#000000; font-weight:bold; text-align:center; font-size:16px; font-family: Arial, sans-serif;">
-                € ${isFinite(p.price) ? p.price.toFixed(2) : esc(p.price)}
-              </div>
-            </a>
-          </td>
-        </tr>
-      </table>
-    <!--[if !mso]><!-->
-    </div>
-    <!--<![endif]-->
-    <!--[if mso]>
+    <td style="padding: 5px; border: 0px; vertical-align: top;">
+      <a href="${p.link}" style="text-decoration:none; color:#000; display:block;">
+        <div style="width:100%; text-align:center;">
+          <img src="${p.image}" alt="${esc(p.title)}"
+               style="width:100%; max-width:180px; height:180px; object-fit:contain; display:inline-block; margin-bottom:8px;" />
+        </div>
+        <div style="margin:0; font-weight:bold; font-size:14px; line-height:1.3; text-align:center; min-height:40px; font-family: Arial, sans-serif; color: #00669b;">
+          ${esc(p.title)}
+        </div>
+        <div style="margin-top:4px; color:#000000; font-weight:bold; text-align:center; font-size:16px; font-family: Arial, sans-serif;">
+          € ${isFinite(p.price) ? p.price.toFixed(2) : esc(p.price)}
+        </div>
+      </a>
     </td>
-    <![endif]-->
   `.trim();
 }
 
-/** Fluid Hybrid responsive layout - 4x1 desktop, 2x2 mobiel */
+/** Table-based responsive layout - GEFIXED voor 4 kolommen probleem */
 function rowHTML(productsInRow, perRow) {
-  // Voor 4 kolommen: gebruik fluid hybrid techniek
+  const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  
   if (perRow === 4) {
-    const cards = productsInRow.map(p => productCardHTML(p, perRow)).join("");
-    
-    return `
-      <![CDATA[
-        <!--[if mso]>
-        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
-          <tr>
-            ${productsInRow.map(p => productCardHTML(p, perRow)).join('')}
-          </tr>
-        </table>
-        <![endif]-->
-        <!--[if !mso]><!-->
-        <div style="
-          width: 100%; 
-          max-width: 600px; 
-          margin: 0 auto; 
-          font-size: 0; 
-          text-align: center;
-          font-family: Arial, sans-serif;
-        ">
-          ${cards}
-        </div>
-        <!--<![endif]-->
-      ]]>
-    `.trim();
-  }
-  
-  // Voor 3 kolommen: aangepaste fluid hybrid (3x1 -> 2x1 -> 1x1)
-  if (perRow === 3) {
-    const cards = productsInRow.map(p => productCardHTML(p, perRow)).join("");
-    
-    return `
-      <![CDATA[
-        <!--[if mso]>
-        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
-          <tr>
-            ${productsInRow.map(p => productCardHTML(p, perRow)).join('')}
-          </tr>
-        </table>
-        <![endif]-->
-        <!--[if !mso]><!-->
-        <div style="
-          width: 100%; 
-          max-width: 600px; 
-          margin: 0 auto; 
-          font-size: 0; 
-          text-align: center;
-          font-family: Arial, sans-serif;
-        ">
-          ${cards}
-        </div>
-        <!--<![endif]-->
-      ]]>
-    `.trim();
-  }
-  
-  // Voor 2 kolommen: normale table layout
-  if (perRow === 2) {
-    const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-    
+    // GEFIXED: 23% width + box-sizing + kleiner padding + table-layout fixed
     const cells = productsInRow.map(p => `
-      <td style="width: 50%; padding: 5px; border: 0px; vertical-align: top;">
+      <td width="23%" style="width: 23%; padding: 3px; border: 0px; vertical-align: top; box-sizing: border-box;">
+        <a href="${p.link}" style="text-decoration:none; color:#000; display:block;">
+          <div style="width:100%; text-align:center;">
+            <img src="${p.image}" alt="${esc(p.title)}"
+                 style="width:100%; max-width:110px; height:110px; object-fit:contain; display:inline-block; margin-bottom:6px;" />
+          </div>
+          <div style="margin:0; font-weight:bold; font-size:11px; line-height:1.2; text-align:center; min-height:30px; font-family: Arial, sans-serif; color: #00669b;">
+            ${esc(p.title)}
+          </div>
+          <div style="margin-top:3px; color:#000000; font-weight:bold; text-align:center; font-size:13px; font-family: Arial, sans-serif;">
+            € ${isFinite(p.price) ? p.price.toFixed(2) : esc(p.price)}
+          </div>
+        </a>
+      </td>
+    `).join("");
+    
+    const emptyCells = 4 - productsInRow.length;
+    const emptyHTML = emptyCells > 0 ? 
+      Array(emptyCells).fill(`<td width="23%" style="width: 23%; padding: 3px; border: 0px; vertical-align: top; box-sizing: border-box;">&nbsp;</td>`).join('') : '';
+    
+    return `
+      <![CDATA[
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"
+               style="border-collapse:collapse; width:100%; max-width:560px; margin: 0 auto; font-family: Arial, sans-serif; table-layout: fixed;">
+          <tr>
+            ${cells}
+            ${emptyHTML}
+          </tr>
+        </table>
+      ]]>
+    `.trim();
+  }
+  
+  if (perRow === 3) {
+    const cells = productsInRow.map(p => `
+      <td width="32%" style="width: 32%; padding: 4px; border: 0px; vertical-align: top; box-sizing: border-box;">
+        <a href="${p.link}" style="text-decoration:none; color:#000; display:block;">
+          <div style="width:100%; text-align:center;">
+            <img src="${p.image}" alt="${esc(p.title)}"
+                 style="width:100%; max-width:140px; height:140px; object-fit:contain; display:inline-block; margin-bottom:7px;" />
+          </div>
+          <div style="margin:0; font-weight:bold; font-size:12px; line-height:1.2; text-align:center; min-height:32px; font-family: Arial, sans-serif; color: #00669b;">
+            ${esc(p.title)}
+          </div>
+          <div style="margin-top:3px; color:#000000; font-weight:bold; text-align:center; font-size:14px; font-family: Arial, sans-serif;">
+            € ${isFinite(p.price) ? p.price.toFixed(2) : esc(p.price)}
+          </div>
+        </a>
+      </td>
+    `).join("");
+    
+    const emptyCells = 3 - productsInRow.length;
+    const emptyHTML = emptyCells > 0 ?
+      Array(emptyCells).fill(`<td width="32%" style="width: 32%; padding: 4px; border: 0px; vertical-align: top; box-sizing: border-box;">&nbsp;</td>`).join('') : '';
+    
+    return `
+      <![CDATA[
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"
+               style="border-collapse:collapse; width:100%; max-width:560px; margin: 0 auto; font-family: Arial, sans-serif; table-layout: fixed;">
+          <tr>
+            ${cells}
+            ${emptyHTML}
+          </tr>
+        </table>
+      ]]>
+    `.trim();
+  }
+  
+  if (perRow === 2) {
+    const cells = productsInRow.map(p => `
+      <td style="width: 48%; padding: 5px; border: 0px; vertical-align: top; box-sizing: border-box;">
         <a href="${p.link}" style="text-decoration:none; color:#000; display:block;">
           <div style="width:100%; text-align:center;">
             <img src="${p.image}" alt="${esc(p.title)}"
@@ -174,14 +154,14 @@ function rowHTML(productsInRow, perRow) {
       </td>
     `).join("");
     
-    const emptyCells = perRow - productsInRow.length;
+    const emptyCells = 2 - productsInRow.length;
     const emptyHTML = emptyCells > 0 ?
-      Array(emptyCells).fill(`<td style="width: 50%; padding: 5px;"></td>`).join('') : '';
+      Array(emptyCells).fill(`<td style="width: 48%; padding: 5px; border: 0px; vertical-align: top; box-sizing: border-box;">&nbsp;</td>`).join('') : '';
     
     return `
       <![CDATA[
         <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"
-               style="border-collapse:collapse; width:100%; max-width:580px; margin: 0 auto; font-family: Arial, sans-serif; table-layout: fixed;">
+               style="border-collapse:collapse; width:100%; max-width:560px; margin: 0 auto; font-family: Arial, sans-serif; table-layout: fixed;">
           <tr>
             ${cells}
             ${emptyHTML}
@@ -191,9 +171,7 @@ function rowHTML(productsInRow, perRow) {
     `.trim();
   }
   
-  // Voor 1 kolom: simpel table layout
-  const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-  
+  // Voor 1 kolom
   const cells = productsInRow.map(p => `
     <tr>
       <td style="padding: 5px; border: 0px; vertical-align: top;">
@@ -216,7 +194,7 @@ function rowHTML(productsInRow, perRow) {
   return `
     <![CDATA[
       <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"
-             style="border-collapse:collapse; width:100%; max-width:600px; margin: 0 auto; font-family: Arial, sans-serif;">
+             style="border-collapse:collapse; width:100%; max-width:560px; margin: 0 auto; font-family: Arial, sans-serif;">
         ${cells}
       </table>
     ]]>
@@ -627,95 +605,28 @@ async function main() {
     padding: 20px;
   }
   
-  /* Fluid Hybrid Preview - exact zoals nieuwe XML output */
-  .fluid-hybrid-preview {
-    width: 100%;
-    max-width: 600px;
-    margin: 0 auto;
-    font-size: 0;
-    text-align: center;
-    font-family: Arial, sans-serif;
-  }
-  
-  .fluid-hybrid-block {
-    display: inline-block;
-    width: 100%;
-    vertical-align: top;
-    font-size: 14px;
-    padding: 10px;
-    box-sizing: border-box;
-  }
-  
-  .fluid-hybrid-block.cols-4 { max-width: 150px; min-width: 150px; }
-  .fluid-hybrid-block.cols-3 { max-width: 200px; min-width: 200px; }
-  .fluid-hybrid-block.cols-2 { max-width: 300px; min-width: 300px; }
-  
-  .fluid-product-card {
-    width: 100%;
-    border: 0px;
-    padding: 5px;
-    text-align: center;
-  }
-  
-  .fluid-product-link {
-    text-decoration: none;
-    color: #000;
-    display: block;
-  }
-  
-  .fluid-product-img {
-    width: 100%;
-    max-width: 180px;
-    height: 180px;
-    object-fit: contain;
-    display: inline-block;
-    margin-bottom: 8px;
-  }
-  
-  .fluid-product-title {
-    margin: 0;
-    font-weight: bold;
-    font-size: 14px;
-    line-height: 1.3;
-    text-align: center;
-    min-height: 40px;
-    font-family: Arial, sans-serif;
-    color: #00669b;
-  }
-  
-  .fluid-product-price {
-    margin-top: 4px;
-    color: #000000;
-    font-weight: bold;
-    text-align: center;
-    font-size: 16px;
-    font-family: Arial, sans-serif;
-  }
-  
-  /* Mobile preview mode */
-  .email-container.mobile-preview .fluid-hybrid-preview {
-    max-width: 375px;
-  }
-  
-  /* Fallback table voor 1-2 kolommen */
+  /* Fixed table preview - exact zoals nieuwe XML output */
   .email-preview-table {
     width: 100%;
     border-collapse: collapse;
     background: white;
-    max-width: 600px;
+    max-width: 560px;
     margin: 0 auto;
     font-family: Arial, sans-serif;
+    table-layout: fixed;
   }
   
   .email-preview-table td {
     vertical-align: top;
-    padding: 5px;
-    text-align: left;
     border: 0px;
+    text-align: left;
+    box-sizing: border-box;
   }
   
-  .email-preview-table.cols-1 td { width: 100%; }
-  .email-preview-table.cols-2 td { width: 50%; }
+  .email-preview-table.cols-1 td { width: 100%; padding: 5px; }
+  .email-preview-table.cols-2 td { width: 48%; padding: 5px; }
+  .email-preview-table.cols-3 td { width: 32%; padding: 4px; }
+  .email-preview-table.cols-4 td { width: 23%; padding: 3px; }
   
   .email-product-link {
     text-decoration: none;
@@ -730,29 +641,58 @@ async function main() {
   
   .email-product-img {
     width: 100%;
-    max-width: 180px;
-    height: 180px;
     object-fit: contain;
     display: inline-block;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
   }
+  
+  .email-preview-table.cols-1 .email-product-img { max-width: 180px; height: 180px; }
+  .email-preview-table.cols-2 .email-product-img { max-width: 180px; height: 180px; }
+  .email-preview-table.cols-3 .email-product-img { max-width: 140px; height: 140px; }
+  .email-preview-table.cols-4 .email-product-img { max-width: 110px; height: 110px; }
   
   .email-product-title {
     margin: 0;
     font-weight: bold;
-    font-size: 14px;
-    line-height: 1.3;
+    line-height: 1.2;
     text-align: center;
     color: #00669b;
-    min-height: 40px;
+    font-family: Arial, sans-serif;
   }
   
+  .email-preview-table.cols-1 .email-product-title { font-size: 14px; min-height: 40px; }
+  .email-preview-table.cols-2 .email-product-title { font-size: 14px; min-height: 40px; }
+  .email-preview-table.cols-3 .email-product-title { font-size: 12px; min-height: 32px; }
+  .email-preview-table.cols-4 .email-product-title { font-size: 11px; min-height: 30px; }
+  
   .email-product-price {
-    margin-top: 4px;
+    margin-top: 3px;
     color: #000000;
     font-weight: bold;
     text-align: center;
-    font-size: 16px;
+    font-family: Arial, sans-serif;
+  }
+  
+  .email-preview-table.cols-1 .email-product-price { font-size: 16px; }
+  .email-preview-table.cols-2 .email-product-price { font-size: 16px; }
+  .email-preview-table.cols-3 .email-product-price { font-size: 14px; }
+  .email-preview-table.cols-4 .email-product-price { font-size: 13px; }
+  
+  /* Mobile preview mode */
+  .email-container.mobile-preview {
+    max-width: 375px;
+  }
+  
+  .email-container.mobile-preview .email-preview-table.cols-3 td,
+  .email-container.mobile-preview .email-preview-table.cols-4 td {
+    width: 50%;
+    display: inline-block;
+  }
+  
+  .email-container.mobile-preview .email-preview-table.cols-1 td,
+  .email-container.mobile-preview .email-preview-table.cols-2 td {
+    width: 100%;
+    display: block;
   }
   
   @keyframes fadeInDown {
@@ -829,7 +769,7 @@ async function main() {
   <div class="container">
     <div class="header">
       <h1>🎮 Nedgame Feed Proxy</h1>
-      <p>ActiveCampaign RSS feeds met Fluid Hybrid responsive product grids</p>
+      <p>ActiveCampaign RSS feeds met gefixte 4-kolommen layout</p>
     </div>
     
     ${indexLinks.map(({ feed, files }) => {
@@ -906,15 +846,40 @@ async function main() {
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 002 2z"/>
             </svg>
-            ActiveCampaign Email Preview (Fluid Hybrid - 4x1 → 2x2)
+            ActiveCampaign Email Preview (GEFIXTE 4-kolommen layout)
           </div>
           <div class="email-wrapper">
             <div class="email-container" id="email-container-${feed.slug}">
               <div class="email-header">🎮 Nedgame Nieuwsbrief</div>
               <div class="email-content">
-                <div id="preview-${feed.slug}">
-                  ${products.length > 0 ? renderPreview(products.slice(0, 8), initialCols) : '<div class="loading-text">Geen producten gevonden...</div>'}
-                </div>
+                ${products.length > 0 ? `
+                  <table class="email-preview-table cols-${initialCols}" id="preview-${feed.slug}" role="presentation" cellpadding="0" cellspacing="0" border="0">
+                    ${(() => {
+                      const rows = [];
+                      const cols = initialCols;
+                      for (let i = 0; i < Math.min(8, products.length); i += cols) {
+                        const rowProducts = products.slice(i, i + cols);
+                        rows.push(`
+                          <tr>
+                            ${rowProducts.map(p => `
+                              <td>
+                                <a href="${p.link}" class="email-product-link">
+                                  <div style="text-align:center;">
+                                    <img src="${p.image}" alt="${escHtml(p.title)}" class="email-product-img" />
+                                  </div>
+                                  <div class="email-product-title">${escHtml(p.title)}</div>
+                                  <div class="email-product-price">€ ${p.price ? p.price.toFixed(2) : '-.--'}</div>
+                                </a>
+                              </td>
+                            `).join('')}
+                            ${rowProducts.length < cols ? '<td></td>'.repeat(cols - rowProducts.length) : ''}
+                          </tr>
+                        `);
+                      }
+                      return rows.join('');
+                    })()}
+                  </table>
+                ` : '<div class="loading-text">Geen producten gevonden...</div>'}
               </div>
             </div>
           </div>
@@ -928,60 +893,6 @@ async function main() {
   
   <script>
     const DISABLED_COLUMNS = [1, 2, 3];
-
-    function renderPreview(products, cols) {
-      const escHtml = (str) => String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
-      
-      // Voor 4 en 3 kolommen: gebruik fluid hybrid
-      if (cols === 4 || cols === 3) {
-        const blocks = products.map(p => \`
-          <div class="fluid-hybrid-block cols-\${cols}">
-            <div class="fluid-product-card">
-              <a href="\${p.link}" class="fluid-product-link">
-                <img src="\${p.image}" alt="\${escHtml(p.title)}" class="fluid-product-img" />
-                <div class="fluid-product-title">\${escHtml(p.title)}</div>
-                <div class="fluid-product-price">€ \${p.price ? p.price.toFixed(2) : '-.--'}</div>
-              </a>
-            </div>
-          </div>
-        \`).join('');
-        
-        return \`<div class="fluid-hybrid-preview">\${blocks}</div>\`;
-      }
-      
-      // Voor 1-2 kolommen: gebruik table layout
-      const rows = [];
-      for (let i = 0; i < products.length; i += cols) {
-        const rowProducts = products.slice(i, i + cols);
-        const cells = rowProducts.map(p => \`
-          <td>
-            <a href="\${p.link}" class="email-product-link">
-              <div style="text-align:center;">
-                <img src="\${p.image}" alt="\${escHtml(p.title)}" class="email-product-img" />
-              </div>
-              <div class="email-product-title">\${escHtml(p.title)}</div>
-              <div class="email-product-price">€ \${p.price ? p.price.toFixed(2) : '-.--'}</div>
-            </a>
-          </td>
-        \`).join('');
-        
-        const emptyCells = cols - rowProducts.length > 0 ? 
-          '<td></td>'.repeat(cols - rowProducts.length) : '';
-        
-        rows.push(\`<tr>\${cells}\${emptyCells}</tr>\`);
-      }
-      
-      return \`
-        <table class="email-preview-table cols-\${cols}" role="presentation" cellpadding="0" cellspacing="0" border="0">
-          \${rows.join('')}
-        </table>
-      \`;
-    }
 
     // Initialize with actual base URL
     document.addEventListener('DOMContentLoaded', function() {
@@ -1032,13 +943,42 @@ async function main() {
         btn.classList.toggle('active', shouldBeActive);
       });
       
-      // Update preview
-      const products = ${JSON.stringify(previewData)};
-      const feedProducts = products[feedSlug] || [];
-      
-      if (feedProducts.length > 0) {
-        const preview = document.getElementById(\`preview-\${feedSlug}\`);
-        preview.innerHTML = renderPreview(feedProducts.slice(0, 8), cols);
+      // Update preview table
+      const preview = document.getElementById(\`preview-\${feedSlug}\`);
+      if (preview) {
+        preview.className = \`email-preview-table cols-\${cols}\`;
+        
+        // Rebuild table with new column count
+        const products = ${JSON.stringify(previewData)};
+        const feedProducts = products[feedSlug] || [];
+        
+        if (feedProducts.length > 0) {
+          const rows = [];
+          for (let i = 0; i < Math.min(8, feedProducts.length); i += cols) {
+            const rowProducts = feedProducts.slice(i, i + cols);
+            const cells = rowProducts.map(p => {
+              // Escape HTML
+              const escTitle = p.title.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+              return \`
+                <td>
+                  <a href="\${p.link}" class="email-product-link">
+                    <div style="text-align:center;">
+                      <img src="\${p.image}" alt="\${escTitle}" class="email-product-img" />
+                    </div>
+                    <div class="email-product-title">\${escTitle}</div>
+                    <div class="email-product-price">€ \${p.price ? p.price.toFixed(2) : '-.--'}</div>
+                  </a>
+                </td>
+              \`;
+            }).join('');
+            
+            const emptyCells = cols - rowProducts.length > 0 ? 
+              '<td></td>'.repeat(cols - rowProducts.length) : '';
+            
+            rows.push(\`<tr>\${cells}\${emptyCells}</tr>\`);
+          }
+          preview.innerHTML = rows.join('');
+        }
       }
       
       // Update URL
@@ -1082,61 +1022,6 @@ async function main() {
   </script>
 </body>
 </html>`;
-
-  function renderPreview(products, cols) {
-    const escHtml = (str) => String(str)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#039;');
-    
-    // Voor 4 en 3 kolommen: gebruik fluid hybrid
-    if (cols === 4 || cols === 3) {
-      const blocks = products.map(p => `
-        <div class="fluid-hybrid-block cols-${cols}">
-          <div class="fluid-product-card">
-            <a href="${p.link}" class="fluid-product-link">
-              <img src="${p.image}" alt="${escHtml(p.title)}" class="fluid-product-img" />
-              <div class="fluid-product-title">${escHtml(p.title)}</div>
-              <div class="fluid-product-price">€ ${p.price ? p.price.toFixed(2) : '-.--'}</div>
-            </a>
-          </div>
-        </div>
-      `).join('');
-      
-      return `<div class="fluid-hybrid-preview">${blocks}</div>`;
-    }
-    
-    // Voor 1-2 kolommen: gebruik table layout
-    const rows = [];
-    for (let i = 0; i < products.length; i += cols) {
-      const rowProducts = products.slice(i, i + cols);
-      const cells = rowProducts.map(p => `
-        <td>
-          <a href="${p.link}" class="email-product-link">
-            <div style="text-align:center;">
-              <img src="${p.image}" alt="${escHtml(p.title)}" class="email-product-img" />
-            </div>
-            <div class="email-product-title">${escHtml(p.title)}</div>
-            <div class="email-product-price">€ ${p.price ? p.price.toFixed(2) : '-.--'}</div>
-          </a>
-        </td>
-      `).join('');
-      
-      const emptyCells = cols - rowProducts.length > 0 ? 
-        '<td></td>'.repeat(cols - rowProducts.length) : '';
-      
-      rows.push(`<tr>${cells}${emptyCells}</tr>`);
-    }
-    
-    return `
-      <table class="email-preview-table cols-${cols}" role="presentation" cellpadding="0" cellspacing="0" border="0">
-        ${rows.join('')}
-      </table>
-    `;
-  }
-
   await fs.writeFile(path.join(OUT_DIR, "index.html"), indexHtml, "utf8");
 }
 
